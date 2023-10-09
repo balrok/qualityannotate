@@ -1,8 +1,22 @@
-# qualityannotate
+# Quality-Annotate
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Program to annotate quality issues on your pull request.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+The implementation tries to be variable within the two dimensions of:
+* Code-Hoster (bitbucket, gitlab, github)
+* Quality-Tool (Sonarqube, Klocwork)
+
+|           | Bitbucket | Gitlab   | Github   |
+|-----------|-----------|----------|----------|
+| Sonarqube | &#9989;   | &#10060; | &#10060; |
+| ???       | &#10060;  | &#10060; | &#10060; |
+
+Since it is a commandline application it can also be integrated in various ci-systems. Please refer to the sample ci
+configs:
+
+* Jenkins (TODO)
+* Gitlab (TODO)
+* Github (TODO)
 
 ## Running the application in dev mode
 
@@ -10,8 +24,6 @@ You can run your application in dev mode that enables live coding using:
 ```shell script
 ./gradlew quarkusDev
 ```
-
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
 
 ## Packaging and running the application
 
