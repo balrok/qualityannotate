@@ -1,13 +1,11 @@
 package org.qualityannotate.quality.sonarqube.client;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Value;
 
 import java.util.List;
 import java.util.Optional;
 
 @Value
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Component {
     /**
      * "key": "MY_PROJECT:ElementImpl.java",

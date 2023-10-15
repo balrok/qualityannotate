@@ -4,10 +4,7 @@ import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.qualityannotate.core.rest.BasicAuthRequestFilter;
-import org.qualityannotate.quality.sonarqube.client.ComponentMeasures;
-import org.qualityannotate.quality.sonarqube.client.Measure;
-import org.qualityannotate.quality.sonarqube.client.Metric;
-import org.qualityannotate.quality.sonarqube.client.SonarqubeApiClient;
+import org.qualityannotate.quality.sonarqube.client.*;
 import org.qualityannotate.api.qualitytool.GlobalMetrics;
 import org.qualityannotate.api.qualitytool.Issue;
 import org.qualityannotate.api.qualitytool.QualityTool;
@@ -31,16 +28,34 @@ public class SonarqubeQualityTool implements QualityTool {
 
     @Override
     public List<Issue> getIssues() {
-        return Collections.emptyList();
+        IssueSearch issuesSearch = client.getIssuesSearch(config.project(), config.pullRequest(), null, null, null, null, null, null, null, null, null);
+        // TODO issueSearch.facets can be used for globalMetrics - but maybe doesn't matter
+        List<Issue> issues = new ArrayList<>();
+        for (SqIssue sqIssue : issuesSearch.issues()) {
+            issues.add(new Issue(sqIssue.getPath(config.project()), sqIssue.getLineNumber(), sqIssue.getMessage(), sqIssue.getSeverity()));
+        }
+        return issues;
     }
 
     @Override
     public GlobalMetrics getGlobalMetrics() {
-        ComponentMeasures componentMeasures = client.getComponentMeasures(config.project(), config.pullRequest(), "new_coverage,new_sqale_debt_ratio,new_uncovered_conditions");
+        ComponentMeasures componentMeasures = client.getComponentMeasures(config.project(), config.pullRequest(),
+                String.join(",", config.globalMetricTypes()));
         Map<String, String> metrics = new HashMap<>();
         for (Metric metric : componentMeasures.getMetrics()) {
-            Optional<Measure> measure = componentMeasures.getComponent().getMeasure(metric.getKey());
-            measure.ifPresent(value -> metrics.put(metric.getName(), value.getPeriod() == null ? value.getValue() : value.getPeriod().value()));
+            Optional<Measure> measureOpt = componentMeasures.getComponent().getMeasure(metric.getKey());
+            if (measureOpt.isPresent()) {
+                Measure measure = measureOpt.get();
+                String value = measure.getPeriod() == null ? measure.getValue() : measure.getPeriod().value();
+                if (metric.getKey().endsWith("coverage")) {
+                    try {
+                        value = String.format("%.2f%%", Double.parseDouble(value));
+                    } catch (NumberFormatException e) {
+                        // ignore
+                    }
+                }
+                metrics.put(metric.getName(), value);
+            }
         }
         return new GlobalMetrics(metrics);
     }

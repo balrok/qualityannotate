@@ -18,10 +18,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.qualityannotate.api.qualitytool.GlobalMetrics;
+import org.qualityannotate.api.qualitytool.Issue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -59,6 +61,11 @@ public class SonarqubeQualityToolTest {
         public String pullRequest() {
             return "Test_Pr";
         }
+
+        @Override
+        public List<String> globalMetricTypes() {
+            return List.of("test-metrics-1", "test-metrics-2");
+        }
     }
 
     @Inject
@@ -84,9 +91,21 @@ public class SonarqubeQualityToolTest {
                 .withBasicAuth("", config.token())
                 .withQueryParam("component", equalTo(config.project()))
                 .withQueryParam("pullRequest", equalTo(config.pullRequest()))
-                .withQueryParam("metricsKeys", not(equalTo("test")))
+                .withQueryParam("metricsKeys", equalTo("test-metrics-1,test-metrics-2"))
                 .willReturn(okJson(content)));
         assertEquals(new GlobalMetrics(Map.of("New issues", "25", "Lines of code", "114", "Complexity", "12")), cut.getGlobalMetrics());
+    }
+
+    @Test
+    void testGetIssues() {
+        String content = getContent("issues/search/sonarqube_issues.json");
+        WM.stubFor(get(urlPathTemplate("/api/issues/search"))
+                .withBasicAuth("", config.token())
+                .withQueryParam("componentKeys", equalTo(config.project()))
+                .willReturn(okJson(content)));
+        assertEquals(List.of(new Issue("om.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest",
+                        null, "Remove this unused private \"getKee\" method.", "MAJOR")),
+                cut.getIssues());
     }
 
     private String getContent(String name) {
