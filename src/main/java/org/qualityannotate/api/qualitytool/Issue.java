@@ -1,4 +1,6 @@
 package org.qualityannotate.api.qualitytool;
 
-public record Issue(String fileName, Integer lineNumber, String comment, String severity) {
+import jakarta.annotation.Nullable;
+
+public record Issue(String fileName, Integer lineNumber, String comment, String severity, @Nullable String urlToIssue) {
 }

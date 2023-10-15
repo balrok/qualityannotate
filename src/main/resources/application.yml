@@ -4,9 +4,9 @@ sonarqube:
   # base-url for your sonarqube api. E.g. https://mysonar.example.com/
   url: "test"
   # How to create a token: https://docs.sonarsource.com/sonarqube/9.8/user-guide/user-account/generating-and-using-tokens/
-  token: "test"
+  token: "_"
   # Name of your project
-  project: "test"
+  project: "_"
   # Pullrequest id
   pull_request: "test"
 
@@ -17,4 +17,14 @@ sonarqube:
     - "new_sqale_debt_ratio"
     - "new_uncovered_conditions"
     - "new_violations"
+
+github:
+  # https://docs.github.com/en/enterprise-server@3.6/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+  token: "_"
+  # Name of your project. E.g. user/repo
+  project: "test"
+  # Pullrequest id
+  pull_request: "_"
+  # commit hash of the analyzed commit
+  commit_hash: "_"
 

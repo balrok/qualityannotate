@@ -1,7 +1,6 @@
 package org.qualityannotate.core.rest;
 
 import jakarta.annotation.Priority;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.client.ClientRequestContext;
 import jakarta.ws.rs.client.ClientRequestFilter;
@@ -27,10 +26,12 @@ public class BasicAuthRequestFilter implements ClientRequestFilter {
 
     @Override
     public void filter(ClientRequestContext requestContext) throws IOException {
-        requestContext.getHeaders().add(HttpHeaders.AUTHORIZATION, getAccessToken());
+        requestContext.getHeaders()
+                      .add(HttpHeaders.AUTHORIZATION, getAccessToken());
     }
 
     private String getAccessToken() {
-        return "Basic " + Base64.getEncoder().encodeToString((user + ":" + password).getBytes());
+        return "Basic " + Base64.getEncoder()
+                                .encodeToString((user + ":" + password).getBytes());
     }
 }

@@ -21,4 +21,13 @@ public interface SonarqubeConfig {
 
     @WithName("global_metric_types")
     List<String> globalMetricTypes();
+
+    default String printWithoutSecrets() {
+        return String.format("""
+                url: %s
+                project: %s
+                pull_request: %s
+                global_metric_types: [%s]
+                """, url(), project(), pullRequest(), String.join(",", globalMetricTypes()));
+    }
 }
