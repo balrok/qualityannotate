@@ -1,7 +1,9 @@
 plugins {
     id 'java'
+    id "jacoco"
     id 'io.quarkus'
     id("io.freefair.lombok") version "8.4"
+    id "org.sonarqube" version "4.3.1.3277"
 }
 
 repositories {
@@ -38,4 +40,23 @@ compileJava {
 
 compileTestJava {
     options.encoding = 'UTF-8'
+}
+
+project.tasks["sonar"].dependsOn "build"
+sonar {
+    properties {
+        property "sonar.projectKey", "quyt_qualityannotate"
+        property "sonar.organization", "quyt"
+        property "sonar.host.url", "https://sonarcloud.io"
+
+        property "sonar.projectName", "Quality Annotate"
+        property "sonar.sourceEncoding", "UTF-8"
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
 }
