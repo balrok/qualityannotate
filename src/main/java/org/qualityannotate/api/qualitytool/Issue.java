@@ -1,4 +1,4 @@
 package org.qualityannotate.api.qualitytool;
 
-public record Issue(String fileName, String lineNumber, String comment, String severity) {
+public record Issue(String fileName, Integer lineNumber, String comment, String severity) {
 }

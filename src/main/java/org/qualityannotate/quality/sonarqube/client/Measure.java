@@ -1,10 +1,8 @@
 package org.qualityannotate.quality.sonarqube.client;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Value;
 
 @Value
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Measure {
     /**
      * "metric": "complexity",
