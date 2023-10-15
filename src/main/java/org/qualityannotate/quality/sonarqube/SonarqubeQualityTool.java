@@ -3,11 +3,12 @@ package org.qualityannotate.quality.sonarqube;
 import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.qualityannotate.core.rest.BasicAuthRequestFilter;
-import org.qualityannotate.quality.sonarqube.client.*;
 import org.qualityannotate.api.qualitytool.GlobalMetrics;
 import org.qualityannotate.api.qualitytool.Issue;
+import org.qualityannotate.api.qualitytool.MetricsAndIssues;
 import org.qualityannotate.api.qualitytool.QualityTool;
+import org.qualityannotate.core.rest.BasicAuthRequestFilter;
+import org.qualityannotate.quality.sonarqube.client.*;
 
 import java.net.URI;
 import java.util.*;
@@ -26,19 +27,17 @@ public class SonarqubeQualityTool implements QualityTool {
                 .build(SonarqubeApiClient.class);
     }
 
-    @Override
-    public List<Issue> getIssues() {
+    List<Issue> getIssues() {
         IssueSearch issuesSearch = client.getIssuesSearch(config.project(), config.pullRequest(), null, null, null, null, null, null, null, null, null);
         // TODO issueSearch.facets can be used for globalMetrics - but maybe doesn't matter
         List<Issue> issues = new ArrayList<>();
         for (SqIssue sqIssue : issuesSearch.issues()) {
-            issues.add(new Issue(sqIssue.getPath(config.project()), sqIssue.getLineNumber(), sqIssue.getMessage(), sqIssue.getSeverity()));
+            issues.add(new Issue(sqIssue.getPath(config.project()), sqIssue.lineNumber(), sqIssue.message(), sqIssue.severity()));
         }
         return issues;
     }
 
-    @Override
-    public GlobalMetrics getGlobalMetrics() {
+    GlobalMetrics getGlobalMetrics() {
         ComponentMeasures componentMeasures = client.getComponentMeasures(config.project(), config.pullRequest(),
                 String.join(",", config.globalMetricTypes()));
         Map<String, String> metrics = new HashMap<>();
@@ -58,6 +57,12 @@ public class SonarqubeQualityTool implements QualityTool {
             }
         }
         return new GlobalMetrics(metrics);
+    }
+
+
+    @Override
+    public MetricsAndIssues getMetricsAndIssues() {
+        return new MetricsAndIssues(getGlobalMetrics(), getIssues());
     }
 
     @Override

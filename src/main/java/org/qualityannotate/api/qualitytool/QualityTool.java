@@ -1,11 +1,7 @@
 package org.qualityannotate.api.qualitytool;
 
-import java.util.List;
-
 public interface QualityTool {
-    List<Issue> getIssues();
-
-    GlobalMetrics getGlobalMetrics();
+    MetricsAndIssues getMetricsAndIssues();
 
     String getSeverityReadable(String severity);
 

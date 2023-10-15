@@ -7,12 +7,10 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 
-import java.util.Set;
-
 @Path("/api")
 public interface SonarqubeApiClient {
     /**
-     * <a href="https://sonarqube.inria.fr/sonarqube/web_api/api/measures">docs</a>
+     * <a href="https://sonarcloud.io/web_api/api/measures">docs</a>
      *
      * @param project    Component key. E.g. my_project
      * @param prId       Pull request id. Not available in the community edition. E.g. 1234
@@ -25,7 +23,7 @@ public interface SonarqubeApiClient {
 
 
     /**
-     * <a href="https://sonarqube.inria.fr/sonarqube/web_api/api/issues/search">docs</a>
+     * <a href="https://sonarcloud.io/web_api/api/issues/search">docs</a>
      * TODO onComponentOnly might be interesting to retrieve global metrics
      *
      * @param project          Component key. E.g. my_project
