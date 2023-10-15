@@ -1,3 +1,5 @@
 sonarqube:
   url: "test"
-  token: 'test'
+  token: "test"
+  project: "test"
+  pull_request: "test"

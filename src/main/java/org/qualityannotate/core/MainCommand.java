@@ -1,10 +1,9 @@
 package org.qualityannotate.core;
 
 import jakarta.inject.Inject;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.qualityannotate.api.qualitytool.Issue;
-import org.qualityannotate.quality.sonarqube.SonarqubeApiImpl;
+import org.qualityannotate.quality.sonarqube.SonarqubeQualityTool;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
@@ -18,7 +17,7 @@ public class MainCommand implements Runnable {
             description = "From which quality-tool you want to retrieve the data")
     String qualityTool;
 
-    private final SonarqubeApiImpl sonarqubeApi;
+    private final SonarqubeQualityTool sonarqubeApi;
 
     @Override
     public void run() {

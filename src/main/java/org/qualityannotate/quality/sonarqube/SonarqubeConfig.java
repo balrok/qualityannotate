@@ -10,4 +10,10 @@ public interface SonarqubeConfig {
 
     @WithName("token")
     String token();
+
+    @WithName("project")
+    String project();
+
+    @WithName("pull_request")
+    String pullRequest();
 }

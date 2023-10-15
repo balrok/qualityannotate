@@ -2,7 +2,7 @@ package org.qualityannotate.api.qualitytool;
 
 import java.util.List;
 
-public interface QualityToolApi {
+public interface QualityTool {
     List<Issue> getIssues();
 
     GlobalMetrics getGlobalMetrics();

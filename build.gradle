@@ -16,6 +16,8 @@ dependencies {
     implementation 'io.quarkus:quarkus-picocli'
     implementation 'io.quarkus:quarkus-arc'
     testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation "org.wiremock:wiremock:3.2.0"
+    testImplementation "org.mockito:mockito-core:3.9.0"
 }
 
 group 'org.acme'
