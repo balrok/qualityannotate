@@ -3,8 +3,10 @@ package org.qualityannotate.coderepo.github;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithName;
 
-@ConfigMapping(prefix = "github")
+@ConfigMapping(prefix = GithubConfig.NAME)
 public interface GithubConfig {
+    String NAME = "github";
+
     @WithName("token")
     String token();
 
@@ -12,7 +14,7 @@ public interface GithubConfig {
     String project();
 
     @WithName("pull_request")
-    String pullRequest();
+    Integer pullRequest();
 
     @WithName("commit_hash")
     String commitHash();

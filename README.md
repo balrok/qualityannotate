@@ -8,17 +8,20 @@ The implementation tries to be variable within the two dimensions of:
 
 |           | Bitbucket | Gitlab   | Github   |
 |-----------|-----------|----------|----------|
-| Sonarqube | &#9989;   | &#10060; | &#10060; |
+| Sonarqube | &#10060;  | &#10060; | &#9989;  |
 | ???       | &#10060;  | &#10060; | &#10060; |
 
 Since it is a commandline application it can also be integrated in various ci-systems. Please refer to the sample ci
 configs:
 
-* Jenkins (TODO)
-* Gitlab (TODO)
-* Github (TODO)
+* &#10060; Jenkins
+* &#10060; Gitlab-CI
+* &#10060; Github-Actions
 
-## Running the application in dev mode
+## Installing
+
+Download the program from releases. Put the application.yml from the release page into `$HOME/.config/qualityannotate.yml`.
+Then run ./qualityannotate sonarqube github
 
 You can run your application in dev mode that enables live coding using:
 ```shell script

@@ -5,8 +5,10 @@ import io.smallrye.config.WithName;
 
 import java.util.List;
 
-@ConfigMapping(prefix = "sonarqube")
+@ConfigMapping(prefix = SonarqubeConfig.NAME)
 public interface SonarqubeConfig {
+    String NAME = "prefix";
+
     @WithName("url")
     String url();
 
