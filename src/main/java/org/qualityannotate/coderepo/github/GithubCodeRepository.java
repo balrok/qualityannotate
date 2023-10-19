@@ -1,40 +1,49 @@
 package org.qualityannotate.coderepo.github;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.qualityannotate.api.coderepository.CodeRepository;
 import org.qualityannotate.api.coderepository.Comment;
 import org.qualityannotate.api.coderepository.FileComment;
-
-import java.io.IOException;
-import java.util.List;
+import org.qualityannotate.coderepo.github.client.GithubApi;
 
 @ApplicationScoped
 public class GithubCodeRepository implements CodeRepository {
     private final GithubConfig config;
-    private final GitHubBuilder gitHubBuilder;
+    private final GithubApi githubApi;
 
     public GithubCodeRepository(GithubConfig config) {
         this.config = config;
-        gitHubBuilder = new GitHubBuilder().withOAuthToken("my_personal_token");
+        githubApi = new GithubApi(config.token());
+    }
+
+    private static Map<Pair<String, Integer>, String> convertFileCommentsToMap(List<FileComment> fileComments) {
+        Map<Pair<String, Integer>, List<Comment>> fileLineToCommentList = new HashMap<>();
+        for (FileComment fileComment : fileComments) {
+            List<Comment> comments = fileLineToCommentList
+                    .computeIfAbsent(Pair.of(fileComment.fileName(), fileComment.linenumber()), k -> new ArrayList<>());
+            comments.add(fileComment.comment());
+        }
+        return fileLineToCommentList.entrySet()
+                .stream()
+                .map(e -> Map.entry(e.getKey(), e.getValue().stream().reduce((c1, c2) -> c1).orElse(Comment.EMPTY)))
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().markdown()));
     }
 
     @Override
     public void createOrUpdateAnnotations(Comment globalComment, List<FileComment> fileComments) throws IOException {
-        GitHub gh = gitHubBuilder.build();
-        gh.checkApiUrlValidity();
-        GHRepository repository = gh.getRepository(config.project());
-        GHPullRequest pullRequest = repository.getPullRequest(Integer.parseInt(config.pullRequest()));
-        pullRequest.comment(globalComment.markdown());
-        for (FileComment fileComment : fileComments) {
-            String markdown = fileComment.comment()
-                                         .markdown();
-            pullRequest.createReviewComment(markdown, config.commitHash(), fileComment.fileName(),
-                    fileComment.linenumber());
-        }
+        githubApi.createOrUpdateMainComment(globalComment.markdown(), config.project(), config.pullRequest());
+        Map<Pair<String, Integer>, String> fileLineToComment = convertFileCommentsToMap(fileComments);
+        githubApi.createOrUpdateFileComments(fileLineToComment, config.project(), config.pullRequest(),
+                config.commitHash());
     }
 
     @Override

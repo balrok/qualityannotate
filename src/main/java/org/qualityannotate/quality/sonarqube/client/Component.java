@@ -21,5 +21,4 @@ public class Component {
     public Optional<Measure> getMeasure(String key) {
         return measures.stream().filter(measure -> measure.getMetric().equals(key)).findFirst();
     }
-
 }

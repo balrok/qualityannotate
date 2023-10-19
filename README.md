@@ -3,86 +3,52 @@
 Program to annotate quality issues on your pull request.
 
 The implementation tries to be variable within the two dimensions of:
+
 * Code-Hoster (bitbucket, gitlab, github)
 * Quality-Tool (Sonarqube, Klocwork)
 
 |           | Bitbucket | Gitlab   | Github   |
 |-----------|-----------|----------|----------|
-| Sonarqube | &#9989;   | &#10060; | &#10060; |
+| Sonarqube | &#10060;  | &#10060; | &#9989;  |
 | ???       | &#10060;  | &#10060; | &#10060; |
 
 Since it is a commandline application it can also be integrated in various ci-systems. Please refer to the sample ci
 configs:
 
-* Jenkins (TODO)
-* Gitlab (TODO)
-* Github (TODO)
+* &#10060; Jenkins
+* &#10060; Gitlab-CI
+* &#10060; Github-Actions
 
-## Running the application in dev mode
+## Installing
+
+Download the program from releases. Put the application.yml from the release page
+into `$HOME/.config/qualityannotate.yml`.
+Then run ./qualityannotate sonarqube github
+
+## Developing
 
 You can run your application in dev mode that enables live coding using:
+
 ```shell script
-./gradlew quarkusDev
+./gradlew quarkusDev --quarkus-args="sonarqube github"
 ```
 
-## Packaging and running the application
+If you want to use intellij, there is a bug with the quarkus-args, so use the jvm-args
+`-Dquarkus.args="sonarqube github"` for the `quarkusDev` job.
 
-The application can be packaged using:
+## Codestyle
+
+Codestyle is setup using `./gradlew spotlessApply`.
+[Intellij requires the eclipse code-formatter plugin](https://plugins.jetbrains.com/plugin/6546-eclipse-code-formatter/versions).
+Configs are `./config/code-formatter/eclipse.importorder` and `./config/code-formatter/eclipse.xml`.
+
+## Creating a native executable / uber jar
+
 ```shell script
-./gradlew build
-```
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./gradlew build -Dquarkus.package.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
+# create a native executable
 ./gradlew build -Dquarkus.package.type=native
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
+# create a native executable using a docker container
 ./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./build/qualityannotate-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/gradle-tooling.
-
-## Related Guides
-
-- YAML Configuration ([guide](https://quarkus.io/guides/config-yaml)): Use YAML to configure your Quarkus application
-- Picocli ([guide](https://quarkus.io/guides/picocli)): Develop command line applications with Picocli
-
-## Provided Code
-
-### YAML Config
-
-Configure your application with YAML
-
-[Related guide section...](https://quarkus.io/guides/config-reference#configuration-examples)
-
-The Quarkus application configuration is located in `src/main/resources/application.yml`.
-
-### Picocli Example
-
-Hello and goodbye are civilization fundamentals. Let's not forget it with this example picocli application by changing the <code>command</code> and <code>parameters</code>.
-
-[Related guide section...](https://quarkus.io/guides/picocli#command-line-application-with-multiple-commands)
-
-Also for picocli applications the dev mode is supported. When running dev mode, the picocli application is executed and on press of the Enter key, is restarted.
-
-As picocli applications will often require arguments to be passed on the commandline, this is also possible in dev mode via:
-```shell script
-./gradlew quarkusDev --quarkus-args='Quarky'
+# create an uber jar
+./gradlew build -Dquarkus.package.type=uber-jar
 ```

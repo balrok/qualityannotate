@@ -1,6 +1,5 @@
 package org.qualityannotate.quality.sonarqube.client;
 
-import lombok.Data;
 import lombok.Value;
 
 @Value

@@ -1,5 +1,11 @@
 package org.qualityannotate.quality.sonarqube;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathTemplate;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.github.jknack.handlebars.internal.Files;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -11,8 +17,6 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.qualityannotate.api.qualitytool.GlobalMetrics;
-import org.qualityannotate.api.qualitytool.Issue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,14 +24,16 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.qualityannotate.api.qualitytool.GlobalMetrics;
+import org.qualityannotate.api.qualitytool.Issue;
 
 @QuarkusTest
 public class SonarqubeQualityToolTest {
     static final WireMockServer WM = new WireMockServer(new WireMockConfiguration().dynamicPort());
+
     @Inject
     SonarqubeQualityTool cut;
+
     @Inject
     SonarqubeConfig config;
 
@@ -44,14 +50,12 @@ public class SonarqubeQualityToolTest {
     @Test
     void testGetGlobalMetrics() {
         String content = getContent("measures/component/sonarqube_component.json");
-        WM.stubFor(get(urlPathTemplate("/api/measures/component")).withBasicAuth("", config.token())
-                                                                  .withQueryParam("component",
-                                                                          equalTo(config.project()))
-                                                                  .withQueryParam("pullRequest",
-                                                                          equalTo(config.pullRequest()))
-                                                                  .withQueryParam("metricsKeys",
-                                                                          equalTo("test-metrics-1,test-metrics-2"))
-                                                                  .willReturn(okJson(content)));
+        WM.stubFor(get(urlPathTemplate("/api/measures/component")).withBasicAuth(config.token(), "")
+                .withQueryParam("component", equalTo(config.project()))
+                .withQueryParam("pullRequest", equalTo(config.pullRequest()))
+                .withQueryParam("metricKeys", equalTo("test-metrics-1,test-metrics-2"))
+                .withQueryParam("additionalFields", equalTo("metrics"))
+                .willReturn(okJson(content)));
         assertEquals(new GlobalMetrics(Map.of("New issues", "25", "Lines of code", "114", "Complexity", "12")),
                 cut.getGlobalMetrics());
     }
@@ -59,18 +63,28 @@ public class SonarqubeQualityToolTest {
     @Test
     void testGetIssues() {
         String content = getContent("issues/search/sonarqube_issues.json");
-        WM.stubFor(get(urlPathTemplate("/api/issues/search")).withBasicAuth("", config.token())
-                                                             .withQueryParam("componentKeys", equalTo(config.project()))
-                                                             .willReturn(okJson(content)));
+        WM.stubFor(get(urlPathTemplate("/api/issues/search")).withBasicAuth(config.token(), "")
+                .withQueryParam("componentKeys", equalTo(config.project()))
+                .withQueryParam("pullRequest", equalTo("Test_Pr"))
+                .withQueryParam("additionalFields", equalTo("_all"))
+                .withQueryParam("facets", equalTo("severities,types"))
+                .withQueryParam("p", equalTo("1"))
+                .withQueryParam("ps", equalTo("500"))
+                .withQueryParam("resolved", equalTo("false"))
+                .withQueryParam("s", equalTo("FILE_LINE"))
+                .withQueryParam("severities", equalTo("MINOR,MAJOR,CRITICAL,BLOCKER"))
+                .withQueryParam("statuses", equalTo("OPEN,REOPENED,CONFIRMED"))
+                .willReturn(okJson(content)));
         assertEquals(
-                List.of(new Issue("om.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest", null,
-                        "Remove this unused private \"getKee\" method.", "MAJOR", null)), cut.getIssues());
+                List.of(new Issue("om.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest", 2,
+                        "Remove this unused private \"getKee\" method.", "MAJOR",
+                        "https://sonarcloud" + ".io/organizations/quyt/rules?open=java:S1144&rule_key=java:S1144")),
+                cut.getIssues());
     }
 
     private String getContent(String name) {
         try {
-            return Files.read(Paths.get("src/test/resources/sonarqube/api/" + name)
-                                   .toFile(), StandardCharsets.UTF_8);
+            return Files.read(Paths.get("src/test/resources/sonarqube/api/" + name).toFile(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

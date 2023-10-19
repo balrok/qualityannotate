@@ -9,6 +9,5 @@ public record Facet(List<FacetValue> values) {
      * @param count some metric count
      */
     public record FacetValue(String val, String count) {
-
     }
 }
