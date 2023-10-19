@@ -7,7 +7,7 @@ import java.util.List;
 
 @ConfigMapping(prefix = SonarqubeConfig.NAME)
 public interface SonarqubeConfig {
-    String NAME = "prefix";
+    String NAME = "sonarqube";
 
     @WithName("url")
     String url();

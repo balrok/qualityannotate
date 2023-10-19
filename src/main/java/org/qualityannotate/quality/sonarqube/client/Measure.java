@@ -2,6 +2,8 @@ package org.qualityannotate.quality.sonarqube.client;
 
 import lombok.Value;
 
+import java.util.List;
+
 @Value
 public class Measure {
     /**
@@ -14,7 +16,11 @@ public class Measure {
      */
     String value;
 
-    Period period;
+    List<Period> periods;
+
+    public Period getPeriod() {
+        return periods.get(0);
+    }
 
     /**
      * @param value     "value": "25",

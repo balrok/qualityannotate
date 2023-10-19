@@ -1,5 +1,6 @@
 package org.qualityannotate.coderepo.github.client;
 
+import io.quarkus.logging.Log;
 import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.github.*;
 
@@ -52,7 +53,7 @@ public class GithubApi {
         while (commentIterator.hasNext()) {
             GHIssueComment comment = commentIterator.next();
             if (comment.getUser().getId() == userId) {
-                System.out.println("Found comment: updating now");
+                Log.info("Found comment: updating now");
                 comment.update(globalComment);
                 return;
             }
@@ -79,8 +80,15 @@ public class GithubApi {
             }
         }
         for (Map.Entry<Pair<String, Integer>, String> fileLineCommentEntry : fileLineToComment.entrySet()) {
-            pullRequest.createReviewComment(fileLineCommentEntry.getValue(), commitHash,
-                    fileLineCommentEntry.getKey().getLeft(), fileLineCommentEntry.getKey().getRight());
+            Integer lineNumber = fileLineCommentEntry.getKey().getRight();
+            lineNumber = (lineNumber == null) ? 1 : lineNumber;
+            String fileName = fileLineCommentEntry.getKey().getLeft();
+            try {
+                pullRequest.createReviewComment(fileLineCommentEntry.getValue(), commitHash,
+                        fileName, lineNumber);
+            } catch (RuntimeException e) {
+                Log.warnf("Could not annotate issue on %s:%d", fileName, lineNumber);
+            }
         }
     }
 }

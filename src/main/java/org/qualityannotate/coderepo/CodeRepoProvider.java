@@ -1,6 +1,7 @@
 package org.qualityannotate.coderepo;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.qualityannotate.api.coderepository.CodeRepository;
 import org.qualityannotate.coderepo.github.GithubCodeRepository;
@@ -9,6 +10,7 @@ import org.qualityannotate.coderepo.github.GithubConfig;
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class CodeRepoProvider {
     private final GithubCodeRepository githubRepo;

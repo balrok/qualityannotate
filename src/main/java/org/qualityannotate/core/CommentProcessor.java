@@ -24,16 +24,19 @@ public class CommentProcessor {
                                                         .stream()
                                                         .map(e -> "| " + e.getKey() + " | " + e.getValue() + " |")
                                                         .collect(Collectors.joining("\n")));
-        return new Comment("TODO-text", markdown, "TODO-html");
+        return new Comment(markdown, markdown, "TODO-html");
     }
 
     public static List<FileComment> createFileComments(List<Issue> issues, QualityTool qualityTool) {
         return issues.stream()
-                     .map(issue -> new FileComment(issue.fileName(), issue.lineNumber(),
-                             new Comment("TODO-text",
-                                     issue.comment() + (issue.urlToIssue() == null ? "" :
-                                             "[issue](" + issue.urlToIssue() + ")"),
-                                     "TODO-html")))
+                     .map(CommentProcessor::createComment)
                      .toList();
+    }
+
+    private static FileComment createComment(Issue issue) {
+        String markdown = issue.comment() + (issue.urlToIssue() == null ? "" :
+                "[issue](" + issue.urlToIssue() + ")");
+        Comment comment = new Comment(markdown, markdown, "TODO-html");
+        return new FileComment(issue.fileName(), issue.lineNumber(), comment);
     }
 }

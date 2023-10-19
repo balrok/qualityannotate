@@ -49,7 +49,7 @@ public class SonarqubeQualityToolTest {
                                                                           equalTo(config.project()))
                                                                   .withQueryParam("pullRequest",
                                                                           equalTo(config.pullRequest()))
-                                                                  .withQueryParam("metricsKeys",
+                                                                  .withQueryParam("metricKeys",
                                                                           equalTo("test-metrics-1,test-metrics-2"))
                                                                   .willReturn(okJson(content)));
         assertEquals(new GlobalMetrics(Map.of("New issues", "25", "Lines of code", "114", "Complexity", "12")),

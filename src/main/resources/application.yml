@@ -1,3 +1,4 @@
+---
 # If your project uses sonarqube (https://www.sonarsource.com/products/sonarqube/) configure it here
 # the properties url, token, project, pull_request are most important to configure
 sonarqube:
@@ -5,10 +6,10 @@ sonarqube:
   url: "test"
   # How to create a token: https://docs.sonarsource.com/sonarqube/9.8/user-guide/user-account/generating-and-using-tokens/
   token: "_"
-  # Name of your project
+  # The Project key
   project: "_"
   # Pullrequest id
-  pull_request: "test"
+  pull_request: "1"
 
   # retrieve these metric types for the global metrics. An empty list will probably return all
   # https://docs.sonarsource.com/sonarqube/9.9/user-guide/metric-definitions/
@@ -19,12 +20,16 @@ sonarqube:
     - "new_violations"
 
 github:
-  # https://docs.github.com/en/enterprise-server@3.6/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
-  token: "_"
+  # https://github.com/settings/tokens
+  token: "token"
   # Name of your project. E.g. user/repo
   project: "test"
   # Pullrequest id
-  pull_request: "_"
+  pull_request: "1"
   # commit hash of the analyzed commit
   commit_hash: "_"
 
+# you can ignore these
+quarkus:
+  native:
+    additional-build-args: "--gc=epsilon"

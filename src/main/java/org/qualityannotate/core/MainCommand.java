@@ -1,8 +1,11 @@
 package org.qualityannotate.core;
 
+import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import org.qualityannotate.api.coderepository.CodeRepository;
+import org.qualityannotate.api.coderepository.Comment;
+import org.qualityannotate.api.coderepository.FileComment;
 import org.qualityannotate.api.qualitytool.MetricsAndIssues;
 import org.qualityannotate.api.qualitytool.QualityTool;
 import org.qualityannotate.coderepo.CodeRepoProvider;
@@ -12,6 +15,9 @@ import org.qualityannotate.quality.sonarqube.SonarqubeConfig;
 import picocli.AutoComplete;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Command(name = "qualityannotate", mixinStandardHelpOptions = true, subcommands = AutoComplete.GenerateCompletion.class,
          description = """
@@ -33,12 +39,17 @@ public class MainCommand implements Runnable {
 
     private static void updateAnnotations(QualityTool qualityTool, CodeRepository codeRepository,
                                           MetricsAndIssues metricsAndIssues) {
+        Comment globalComment = CommentProcessor.createGlobalComment(metricsAndIssues.globalMetrics(), qualityTool);
+        List<FileComment> fileComments =
+                CommentProcessor.createFileComments(metricsAndIssues.issues(), qualityTool);
+        Log.infof("Global comment:\n%s", globalComment.text());
+        Log.infof("Issues:\n%s", fileComments.stream().map(c -> String.format("%s:%d\n%s", c.fileName(),
+                c.linenumber(), c.comment().text())).collect(Collectors.joining("\n\n")));
         try {
-            codeRepository.createOrUpdateAnnotations(
-                    CommentProcessor.createGlobalComment(metricsAndIssues.globalMetrics(), qualityTool),
-                    CommentProcessor.createFileComments(metricsAndIssues.issues(), qualityTool));
+            codeRepository.createOrUpdateAnnotations(globalComment, fileComments);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Log.error("Updating the code-repository failed", e);
+            System.exit(1);
         }
     }
 
@@ -47,7 +58,9 @@ public class MainCommand implements Runnable {
         try {
             metricsAndIssues = qualityTool.getMetricsAndIssues();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Log.error("Could not extract metrics", e);
+            System.exit(1);
+            return null;
         }
         return metricsAndIssues;
     }
@@ -56,10 +69,10 @@ public class MainCommand implements Runnable {
     public void run() {
         QualityTool qualityTool = qualityToolProvider.getQualityTool(qualityToolParam);
         CodeRepository codeRepository = codeRepoProvider.getCodeRepository(codeRepositoryParam);
-        System.out.printf("Quality tool configured with\n%s\n", qualityTool.printConfigWithoutSecrets());
-        System.out.printf("Code-Repository tool configured with\n%s\n", codeRepository.printConfigWithoutSecrets());
+        Log.infof("Quality tool configured with\n%s", qualityTool.printConfigWithoutSecrets());
+        Log.infof("Code-Repository tool configured with\n%s", codeRepository.printConfigWithoutSecrets());
         MetricsAndIssues metricsAndIssues = getMetricsAndIssues(qualityTool);
-        System.out.println(metricsAndIssues);
+        Log.info(metricsAndIssues);
         updateAnnotations(qualityTool, codeRepository, metricsAndIssues);
     }
 

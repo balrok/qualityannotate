@@ -1,5 +1,6 @@
 package org.qualityannotate.core.rest;
 
+import io.netty.util.internal.StringUtil;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.client.ClientRequestContext;
@@ -24,6 +25,11 @@ public class BasicAuthRequestFilter implements ClientRequestFilter {
     final String user;
     final String password;
 
+    public BasicAuthRequestFilter(String token) {
+        user = null;
+        password = token;
+    }
+
     @Override
     public void filter(ClientRequestContext requestContext) throws IOException {
         requestContext.getHeaders()
@@ -31,6 +37,11 @@ public class BasicAuthRequestFilter implements ClientRequestFilter {
     }
 
     private String getAccessToken() {
+        // without a username its toke-based auth
+        if (StringUtil.isNullOrEmpty(user)) {
+            return "Basic " + Base64.getEncoder()
+                                    .encodeToString((password + ":").getBytes());
+        }
         return "Basic " + Base64.getEncoder()
                                 .encodeToString((user + ":" + password).getBytes());
     }
