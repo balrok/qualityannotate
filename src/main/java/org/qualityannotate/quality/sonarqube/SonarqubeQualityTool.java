@@ -5,14 +5,24 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 import org.qualityannotate.api.qualitytool.GlobalMetrics;
 import org.qualityannotate.api.qualitytool.Issue;
 import org.qualityannotate.api.qualitytool.MetricsAndIssues;
 import org.qualityannotate.api.qualitytool.QualityTool;
 import org.qualityannotate.core.rest.BasicAuthRequestFilter;
-import org.qualityannotate.quality.sonarqube.client.*;
+import org.qualityannotate.quality.sonarqube.client.ComponentMeasures;
+import org.qualityannotate.quality.sonarqube.client.IssueSearch;
+import org.qualityannotate.quality.sonarqube.client.Measure;
+import org.qualityannotate.quality.sonarqube.client.Metric;
+import org.qualityannotate.quality.sonarqube.client.SonarqubeApiClient;
+import org.qualityannotate.quality.sonarqube.client.SqIssue;
 
 @ApplicationScoped
 public class SonarqubeQualityTool implements QualityTool {
@@ -33,8 +43,9 @@ public class SonarqubeQualityTool implements QualityTool {
         // TODO issueSearch.facets can be used for globalMetrics - but maybe doesn't matter
         List<Issue> issues = new ArrayList<>();
         for (SqIssue sqIssue : issuesSearch.issues()) {
-            issues.add(new Issue(sqIssue.getPath(config.project()), sqIssue.textRange().startLine(), sqIssue.message(),
-                    sqIssue.severity(), null));
+            issues.add(new Issue(sqIssue.getPath(config.project()), sqIssue.textRange().startLine(),
+                    sqIssue.getQualityType().map(q -> q + ": ").orElse("") + sqIssue.message(), sqIssue.getSeverity(),
+                    getIssueUrl(sqIssue.rule())));
         }
         return issues;
     }
@@ -71,6 +82,15 @@ public class SonarqubeQualityTool implements QualityTool {
         return new GlobalMetrics(metrics);
     }
 
+    private String getIssueUrl(String rule) {
+        if (rule == null) {
+            return null;
+        }
+        return String.format("https://sonarcloud.io/organizations/quyt/rules?open=%s&rule_key=%s", rule, rule);
+        // TODO link to the config.url or find the right organization on sonarcloud
+        // return config.url() + String.format("coding_rules?open=%s&rule_key=%s", rule, rule);
+    }
+
     @Override
     public MetricsAndIssues getMetricsAndIssues() {
         return new MetricsAndIssues(getGlobalMetrics(), getIssues());
@@ -78,12 +98,17 @@ public class SonarqubeQualityTool implements QualityTool {
 
     @Override
     public String getSeverityReadable(String severity) {
-        return null;
+        return severity;
     }
 
     @Override
-    public String getSeverityUrl(String severity) {
-        return null;
+    public String getSeverityIcon(String severity) {
+        return switch (severity.toLowerCase(Locale.ENGLISH)) {
+        case "low" -> "ℹ\uFE0F";
+        case "medium" -> "⚠\uFE0F";
+        case "high" -> "\uD83D\uDED1";
+        default -> severity;
+        };
     }
 
     @Override

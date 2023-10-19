@@ -20,7 +20,7 @@ sonarqube:
     - "new_violations"
 
 github:
-  # https://github.com/settings/tokens
+  # https://help.github.com/articles/creating-an-access-token-for-command-line-use/
   token: "token"
   # Name of your project. E.g. user/repo
   project: "test"

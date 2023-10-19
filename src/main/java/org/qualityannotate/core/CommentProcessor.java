@@ -29,11 +29,14 @@ public class CommentProcessor {
     }
 
     public static List<FileComment> createFileComments(List<Issue> issues, QualityTool qualityTool) {
-        return issues.stream().map(CommentProcessor::createComment).toList();
+        return issues.stream().map(issue -> createComment(issue, qualityTool)).toList();
     }
 
-    private static FileComment createComment(Issue issue) {
-        String markdown = issue.comment() + (issue.urlToIssue() == null ? "" : "[issue](" + issue.urlToIssue() + ")");
+    private static FileComment createComment(Issue issue, QualityTool qualityTool) {
+        String markdown = String.format("""
+                %s %s%s
+                """, qualityTool.getSeverityIcon(issue.severity()), issue.comment(),
+                (issue.urlToIssue() == null ? "" : " [details](" + issue.urlToIssue() + ")"));
         Comment comment = new Comment(markdown, markdown, "TODO-html");
         return new FileComment(issue.fileName(), issue.lineNumber(), comment);
     }

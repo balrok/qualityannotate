@@ -5,7 +5,7 @@ public interface QualityTool {
 
     String getSeverityReadable(String severity);
 
-    String getSeverityUrl(String severity);
+    String getSeverityIcon(String severity);
 
     String printConfigWithoutSecrets();
 

@@ -1,6 +1,8 @@
 package org.qualityannotate.quality.sonarqube.client;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Single issue inside the project.
@@ -36,6 +38,20 @@ public record SqIssue(String key, String component, String project, String rule,
      */
     public String getPath(String project) {
         return component.replace(project, "").substring(1);
+    }
+
+    public String getSeverity() {
+        if (impacts != null && !impacts.isEmpty()) {
+            return impacts.get(0).severity;
+        }
+        return severity;
+    }
+
+    public Optional<String> getQualityType() {
+        if (impacts != null && !impacts.isEmpty()) {
+            return Optional.of(impacts.get(0).softwareQuality.toLowerCase(Locale.ENGLISH));
+        }
+        return Optional.empty();
     }
 
     public record TextRange(int startLine, int endLine, int startOffset, int endOffset) {

@@ -2,7 +2,13 @@ package org.qualityannotate.coderepo.github.client;
 
 import io.quarkus.logging.Log;
 import org.apache.commons.lang3.tuple.Pair;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHIssueComment;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestReviewComment;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.PagedIterator;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -70,7 +76,9 @@ public class GithubApi {
                 String comment = fileLineToComment.get(fileLine);
                 if (comment != null) {
                     fileLineToComment.remove(fileLine);
-                    review.update(comment);
+                    if (!review.getBody().equals(comment)) {
+                        review.update(comment);
+                    }
                 } else {
                     review.delete();
                 }
