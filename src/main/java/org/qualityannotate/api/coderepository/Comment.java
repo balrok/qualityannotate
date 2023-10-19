@@ -1,6 +1,7 @@
 package org.qualityannotate.api.coderepository;
 
 public record Comment(String text, String markdown, String html) {
+
     public static Comment EMPTY = new Comment("", "", "");
 
     /**
@@ -9,6 +10,5 @@ public record Comment(String text, String markdown, String html) {
     Comment append(Comment other) {
         return new Comment(text + "\n\n" + other.text, markdown + "\n\n" + other.markdown,
                 html + "<br/><br/>" + other.html);
-
     }
 }

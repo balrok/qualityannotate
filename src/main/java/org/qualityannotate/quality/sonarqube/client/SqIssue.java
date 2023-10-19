@@ -1,13 +1,13 @@
 package org.qualityannotate.quality.sonarqube.client;
 
-
 import java.util.List;
 
 /**
  * Single issue inside the project.
  *
  * @param key        unique identifier. E.g. 01fc972e-2a3c-433e-bcae-0bd7f88f5123
- * @param component  E.g. com.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest
+ * @param component  E.g.
+ *                   com.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest
  * @param project    E.g. com.github.kevinsawicki:http-request
  * @param rule       E.g. java:S1144
  * @param status     E.g. RESOLVED
@@ -24,10 +24,10 @@ import java.util.List;
  * @param textRange  E.g. startLine: 2, endline: 2, startOffset: 0, endOffset: 204
  */
 public record SqIssue(String key, String component, String project, String rule, String status, String resolution,
-                      @Deprecated String severity, String message, Integer lineNumber, String hash, String author,
-                      String effort, @Deprecated String type,
-                      org.qualityannotate.quality.sonarqube.client.SqIssue.TextRange textRange,
-                      boolean quickFixAvailable, List<Impact> impacts) {
+        @Deprecated String severity, String message, Integer lineNumber, String hash, String author, String effort,
+        @Deprecated String type, org.qualityannotate.quality.sonarqube.client.SqIssue.TextRange textRange,
+        boolean quickFixAvailable, List<Impact> impacts) {
+
     /**
      * Computing the file-path requires to know the project-identifier.
      * It may not work if sonarqube was just using compiled files for analysis.

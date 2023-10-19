@@ -3,15 +3,16 @@ package org.qualityannotate.quality.sonarqube;
 import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
+import java.net.URI;
+import java.util.*;
+
 import org.qualityannotate.api.qualitytool.GlobalMetrics;
 import org.qualityannotate.api.qualitytool.Issue;
 import org.qualityannotate.api.qualitytool.MetricsAndIssues;
 import org.qualityannotate.api.qualitytool.QualityTool;
 import org.qualityannotate.core.rest.BasicAuthRequestFilter;
 import org.qualityannotate.quality.sonarqube.client.*;
-
-import java.net.URI;
-import java.util.*;
 
 @ApplicationScoped
 public class SonarqubeQualityTool implements QualityTool {
@@ -21,9 +22,10 @@ public class SonarqubeQualityTool implements QualityTool {
     @Inject
     public SonarqubeQualityTool(SonarqubeConfig config) {
         this.config = config;
-        client = QuarkusRestClientBuilder.newBuilder().baseUri(URI.create(config.url()))
-                                         .register(new BasicAuthRequestFilter(config.token()))
-                                         .build(SonarqubeApiClient.class);
+        client = QuarkusRestClientBuilder.newBuilder()
+                .baseUri(URI.create(config.url()))
+                .register(new BasicAuthRequestFilter(config.token()))
+                .build(SonarqubeApiClient.class);
     }
 
     List<Issue> getIssues() {
@@ -45,7 +47,10 @@ public class SonarqubeQualityTool implements QualityTool {
             Optional<Measure> measureOpt = componentMeasures.getComponent().getMeasure(metric.getKey());
             if (measureOpt.isPresent()) {
                 Measure measure = measureOpt.get();
-                String value = measure.getPeriod() == null ? measure.getValue() : measure.getPeriod().value();
+                String value = measure.getPeriod().map(Measure.Period::value).orElse(measure.getValue());
+                if (value == null) {
+                    value = "";
+                }
                 if (metric.getKey().endsWith("coverage")) {
                     try {
                         value = String.format("%.2f%%", Double.parseDouble(value));
@@ -55,6 +60,7 @@ public class SonarqubeQualityTool implements QualityTool {
                 } else {
                     try {
                         value = String.format("%.3f", Double.parseDouble(value));
+                        value = value.replaceAll("\\.000$", "");
                     } catch (NumberFormatException e) {
                         // ignore
                     }
@@ -64,7 +70,6 @@ public class SonarqubeQualityTool implements QualityTool {
         }
         return new GlobalMetrics(metrics);
     }
-
 
     @Override
     public MetricsAndIssues getMetricsAndIssues() {

@@ -25,6 +25,8 @@ Download the program from releases. Put the application.yml from the release pag
 into `$HOME/.config/qualityannotate.yml`.
 Then run ./qualityannotate sonarqube github
 
+## Developing
+
 You can run your application in dev mode that enables live coding using:
 
 ```shell script
@@ -33,6 +35,12 @@ You can run your application in dev mode that enables live coding using:
 
 If you want to use intellij, there is a bug with the quarkus-args, so use the jvm-args
 `-Dquarkus.args="sonarqube github"` for the `quarkusDev` job.
+
+## Codestyle
+
+Codestyle is setup using `./gradlew spotlessApply`.
+[Intellij requires the eclipse code-formatter plugin](https://plugins.jetbrains.com/plugin/6546-eclipse-code-formatter/versions).
+Configs are `./config/code-formatter/eclipse.importorder` and `./config/code-formatter/eclipse.xml`.
 
 ## Creating a native executable / uber jar
 

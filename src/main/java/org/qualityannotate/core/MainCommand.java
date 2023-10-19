@@ -3,6 +3,13 @@ package org.qualityannotate.core;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
+import picocli.AutoComplete;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.qualityannotate.api.coderepository.CodeRepository;
 import org.qualityannotate.api.coderepository.Comment;
 import org.qualityannotate.api.coderepository.FileComment;
@@ -12,39 +19,31 @@ import org.qualityannotate.coderepo.CodeRepoProvider;
 import org.qualityannotate.coderepo.github.GithubConfig;
 import org.qualityannotate.quality.QualityToolProvider;
 import org.qualityannotate.quality.sonarqube.SonarqubeConfig;
-import picocli.AutoComplete;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Command(name = "qualityannotate", mixinStandardHelpOptions = true, subcommands = AutoComplete.GenerateCompletion.class,
-         description = """
-                 Helps extracting issues from quality tools like sonarqube and annotate them on your pull requests.
-                 Make sure to have the application.yml located under config/application.yml
-                 """)
-@RequiredArgsConstructor(onConstructor_ = {@Inject})
+@Command(name = "qualityannotate", mixinStandardHelpOptions = true, subcommands = AutoComplete.GenerateCompletion.class, description = """
+        Helps extracting issues from quality tools like sonarqube and annotate them on your pull requests.
+        Make sure to have the application.yml located under config/application.yml
+        """)
+@RequiredArgsConstructor(onConstructor_ = { @Inject })
 public class MainCommand implements Runnable {
     private final CodeRepoProvider codeRepoProvider;
     private final QualityToolProvider qualityToolProvider;
-    @Parameters(paramLabel = "<qualitytool>", defaultValue = SonarqubeConfig.NAME,
-                description = "From which quality-tool you want to retrieve the data. Possible Values: ${COMPLETION-CANDIDATES}; Default: ${DEFAULT-VALUE}",
-                completionCandidates = QualityToolProvider.QualityToolCandidates.class)
+
+    @Parameters(paramLabel = "<qualitytool>", defaultValue = SonarqubeConfig.NAME, description = "From which quality-tool you want to retrieve the data. Possible Values: ${COMPLETION-CANDIDATES}; Default: ${DEFAULT-VALUE}", completionCandidates = QualityToolProvider.QualityToolCandidates.class)
     String qualityToolParam;
-    @Parameters(paramLabel = "<coderepository>", defaultValue = GithubConfig.NAME,
-                description = "To which code-repository you want to upload the data. Possible Values: ${COMPLETION-CANDIDATES}; Default: ${DEFAULT-VALUE}",
-                completionCandidates = CodeRepoProvider.CodeRepositoryCandidates.class)
+
+    @Parameters(paramLabel = "<coderepository>", defaultValue = GithubConfig.NAME, description = "To which code-repository you want to upload the data. Possible Values: ${COMPLETION-CANDIDATES}; Default: ${DEFAULT-VALUE}", completionCandidates = CodeRepoProvider.CodeRepositoryCandidates.class)
     String codeRepositoryParam;
 
     private static void updateAnnotations(QualityTool qualityTool, CodeRepository codeRepository,
-                                          MetricsAndIssues metricsAndIssues) {
+            MetricsAndIssues metricsAndIssues) {
         Comment globalComment = CommentProcessor.createGlobalComment(metricsAndIssues.globalMetrics(), qualityTool);
-        List<FileComment> fileComments =
-                CommentProcessor.createFileComments(metricsAndIssues.issues(), qualityTool);
+        List<FileComment> fileComments = CommentProcessor.createFileComments(metricsAndIssues.issues(), qualityTool);
         Log.infof("Global comment:\n%s", globalComment.text());
-        Log.infof("Issues:\n%s", fileComments.stream().map(c -> String.format("%s:%d\n%s", c.fileName(),
-                c.linenumber(), c.comment().text())).collect(Collectors.joining("\n\n")));
+        Log.infof("Issues:\n%s",
+                fileComments.stream()
+                        .map(c -> String.format("%s:%d\n%s", c.fileName(), c.linenumber(), c.comment().text()))
+                        .collect(Collectors.joining("\n\n")));
         try {
             codeRepository.createOrUpdateAnnotations(globalComment, fileComments);
         } catch (Exception e) {
@@ -75,5 +74,4 @@ public class MainCommand implements Runnable {
         Log.info(metricsAndIssues);
         updateAnnotations(qualityTool, codeRepository, metricsAndIssues);
     }
-
 }

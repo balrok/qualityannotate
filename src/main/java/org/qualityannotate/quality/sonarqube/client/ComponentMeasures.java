@@ -9,6 +9,7 @@ import java.util.List;
 public class ComponentMeasures {
     @JsonProperty("component")
     public Component component;
+
     @JsonProperty("metrics")
     public List<Metric> metrics;
 }

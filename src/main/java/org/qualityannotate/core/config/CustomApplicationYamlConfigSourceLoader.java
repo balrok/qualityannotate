@@ -15,14 +15,11 @@ public class CustomApplicationYamlConfigSourceLoader {
         public List<ConfigSource> getConfigSources(final ClassLoader classLoader) {
             ArrayList<ConfigSource> configSources = new ArrayList<>(loadConfigSources(
                     Paths.get(System.getProperty("user.home"), ".config", "qualityannotate.yaml").toUri().toString(),
-                    280,
-                    classLoader));
+                    280, classLoader));
             configSources.addAll(loadConfigSources(
                     Paths.get(System.getProperty("user.home"), ".config", "qualityannotate.yml").toUri().toString(),
-                    280,
-                    classLoader));
+                    280, classLoader));
             return configSources;
         }
-
     }
 }

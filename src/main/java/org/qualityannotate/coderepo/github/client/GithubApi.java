@@ -16,8 +16,7 @@ public class GithubApi {
      */
     private GitHub github = null;
     /**
-     * Current user's id.
-     * Guaranteed to be not null by {@link #init()}
+     * Current user's id. Guaranteed to be not null by {@link #init()}
      */
     private long userId = 0L;
 
@@ -45,8 +44,7 @@ public class GithubApi {
         return ghPullRequest;
     }
 
-    public void createOrUpdateMainComment(String globalComment, String project,
-                                          int pullRequestId) throws IOException {
+    public void createOrUpdateMainComment(String globalComment, String project, int pullRequestId) throws IOException {
         init();
         GHPullRequest pullRequest = getPR(project, pullRequestId);
         PagedIterator<GHIssueComment> commentIterator = pullRequest.listComments().iterator();
@@ -62,9 +60,8 @@ public class GithubApi {
         pullRequest.comment(globalComment);
     }
 
-
     public void createOrUpdateFileComments(Map<Pair<String, Integer>, String> fileLineToComment, String project,
-                                           int pullRequestId, String commitHash) throws IOException {
+            int pullRequestId, String commitHash) throws IOException {
         init();
         GHPullRequest pullRequest = getPR(project, pullRequestId);
         for (GHPullRequestReviewComment review : pullRequest.listReviewComments()) {
@@ -84,8 +81,7 @@ public class GithubApi {
             lineNumber = (lineNumber == null) ? 1 : lineNumber;
             String fileName = fileLineCommentEntry.getKey().getLeft();
             try {
-                pullRequest.createReviewComment(fileLineCommentEntry.getValue(), commitHash,
-                        fileName, lineNumber);
+                pullRequest.createReviewComment(fileLineCommentEntry.getValue(), commitHash, fileName, lineNumber);
             } catch (RuntimeException e) {
                 Log.warnf("Could not annotate issue on %s:%d", fileName, lineNumber);
             }
