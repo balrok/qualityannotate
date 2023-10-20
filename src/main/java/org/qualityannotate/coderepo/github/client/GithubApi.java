@@ -57,29 +57,35 @@ public class GithubApi {
         while (commentIterator.hasNext()) {
             GHIssueComment comment = commentIterator.next();
             if (comment.getUser().getId() == userId) {
-                Log.info("Found comment: updating now");
+                Log.info("Found global comment: updating now");
                 comment.update(globalComment);
                 return;
             }
         }
-        System.out.println("Found comment: updating now");
+        System.out.println("Creating new global comment");
         pullRequest.comment(globalComment);
     }
 
     public void createOrUpdateFileComments(Map<Pair<String, Integer>, String> fileLineToComment, String project,
-            int pullRequestId, String commitHash) throws IOException {
+            int pullRequestId) throws IOException {
         init();
+        Log.info("Start creating file comments");
         GHPullRequest pullRequest = getPR(project, pullRequestId);
+        String commitHash = pullRequest.getHead().getSha();
+
         for (GHPullRequestReviewComment review : pullRequest.listReviewComments()) {
             if (review.getUser().getId() == userId) {
                 Pair<String, Integer> fileLine = Pair.of(review.getPath(), review.getLine());
                 String comment = fileLineToComment.get(fileLine);
+                Log.info("Found existing file comment");
                 if (comment != null) {
                     fileLineToComment.remove(fileLine);
                     if (!review.getBody().equals(comment)) {
+                        Log.info(" -> updating");
                         review.update(comment);
                     }
                 } else {
+                    Log.info(" -> deleting");
                     review.delete();
                 }
             }
@@ -88,6 +94,7 @@ public class GithubApi {
             Integer lineNumber = fileLineCommentEntry.getKey().getRight();
             lineNumber = (lineNumber == null) ? 1 : lineNumber;
             String fileName = fileLineCommentEntry.getKey().getLeft();
+            Log.info("Creating new file comment");
             try {
                 pullRequest.createReviewComment(fileLineCommentEntry.getValue(), commitHash, fileName, lineNumber);
             } catch (RuntimeException e) {

@@ -42,8 +42,7 @@ public class GithubCodeRepository implements CodeRepository {
     public void createOrUpdateAnnotations(Comment globalComment, List<FileComment> fileComments) throws IOException {
         githubApi.createOrUpdateMainComment(globalComment.markdown(), config.project(), config.pullRequest());
         Map<Pair<String, Integer>, String> fileLineToComment = convertFileCommentsToMap(fileComments);
-        githubApi.createOrUpdateFileComments(fileLineToComment, config.project(), config.pullRequest(),
-                config.commitHash());
+        githubApi.createOrUpdateFileComments(fileLineToComment, config.project(), config.pullRequest());
     }
 
     @Override

@@ -26,8 +26,6 @@ github:
   project: "test"
   # Pullrequest id
   pull_request: "1"
-  # commit hash of the analyzed commit
-  commit_hash: "_"
 
 # you can ignore these
 quarkus:

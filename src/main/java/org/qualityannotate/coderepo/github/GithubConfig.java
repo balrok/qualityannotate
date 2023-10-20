@@ -16,14 +16,10 @@ public interface GithubConfig {
     @WithName("pull_request")
     Integer pullRequest();
 
-    @WithName("commit_hash")
-    String commitHash();
-
     default String printWithoutSecrets() {
         return String.format("""
                 project: %s
                 pull_request: %s
-                commit_hash: %s
-                """, project(), pullRequest(), commitHash());
+                """, project(), pullRequest());
     }
 }
