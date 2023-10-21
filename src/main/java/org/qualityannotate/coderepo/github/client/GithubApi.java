@@ -11,8 +11,11 @@ import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.PagedIterator;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class GithubApi {
     private final GitHubBuilder gitHubBuilder;
@@ -50,56 +53,82 @@ public class GithubApi {
         return ghPullRequest;
     }
 
-    public void createOrUpdateMainComment(String globalComment, String project, int pullRequestId) throws IOException {
+    public Optional<GithubMainComment> getMainComment(String project, int pullRequestId) throws IOException {
         init();
         GHPullRequest pullRequest = getPR(project, pullRequestId);
         PagedIterator<GHIssueComment> commentIterator = pullRequest.listComments().iterator();
         while (commentIterator.hasNext()) {
             GHIssueComment comment = commentIterator.next();
             if (comment.getUser().getId() == userId) {
-                Log.info("Found global comment: updating now");
-                comment.update(globalComment);
-                return;
+                return Optional.of(cmt -> {
+                    Log.info("Updating global comment");
+                    comment.update(cmt);
+                });
             }
         }
-        System.out.println("Creating new global comment");
-        pullRequest.comment(globalComment);
+        return Optional.empty();
     }
 
-    public void createOrUpdateFileComments(Map<Pair<String, Integer>, String> fileLineToComment, String project,
-            int pullRequestId) throws IOException {
+    public void createMainComment(String project, int pullRequestId, String comment) throws IOException {
+        init();
+        GHPullRequest pullRequest = getPR(project, pullRequestId);
+        System.out.println("Creating new global comment");
+        pullRequest.comment(comment);
+    }
+
+    public List<GithubFileComment> listFileComments(String project, int pullRequestId) throws IOException {
         init();
         Log.info("Start creating file comments");
         GHPullRequest pullRequest = getPR(project, pullRequestId);
-        String commitHash = pullRequest.getHead().getSha();
-
+        List<GithubFileComment> result = new ArrayList<>();
         for (GHPullRequestReviewComment review : pullRequest.listReviewComments()) {
             if (review.getUser().getId() == userId) {
-                Pair<String, Integer> fileLine = Pair.of(review.getPath(), review.getLine());
-                String comment = fileLineToComment.get(fileLine);
-                Log.info("Found existing file comment");
-                if (comment != null) {
-                    fileLineToComment.remove(fileLine);
-                    if (!review.getBody().equals(comment)) {
-                        Log.info(" -> updating");
+                result.add(new GithubFileComment() {
+                    @Override
+                    public void update(String comment) throws IOException {
                         review.update(comment);
                     }
-                } else {
-                    Log.info(" -> deleting");
-                    review.delete();
-                }
+
+                    @Override
+                    public void delete() throws IOException {
+                        review.delete();
+                    }
+
+                    @Override
+                    public Pair<String, Integer> getFileLine() {
+                        return Pair.of(review.getPath(), review.getLine());
+                    }
+
+                    @Override
+                    public String getComment() {
+                        return review.getBody();
+                    }
+                });
             }
         }
-        for (Map.Entry<Pair<String, Integer>, String> fileLineCommentEntry : fileLineToComment.entrySet()) {
-            Integer lineNumber = fileLineCommentEntry.getKey().getRight();
-            lineNumber = (lineNumber == null) ? 1 : lineNumber;
-            String fileName = fileLineCommentEntry.getKey().getLeft();
-            Log.info("Creating new file comment");
-            try {
-                pullRequest.createReviewComment(fileLineCommentEntry.getValue(), commitHash, fileName, lineNumber);
-            } catch (RuntimeException e) {
-                Log.warnf("Could not annotate issue on %s:%d", fileName, lineNumber);
-            }
-        }
+        return result;
+    }
+
+    public void createFileComment(String project, int pullRequestId, String file, Integer line, String comment)
+            throws IOException {
+        init();
+        GHPullRequest pullRequest = getPR(project, pullRequestId);
+        String commitHash = pullRequest.getHead().getSha();
+        line = (line == null || line < 1) ? 1 : line;
+        pullRequest.createReviewComment(comment, commitHash, file, line);
+    }
+
+    public interface GithubMainComment {
+        void update(String comment) throws IOException;
+    }
+
+    public interface GithubFileComment {
+        void update(String comment) throws IOException;
+
+        void delete() throws IOException;
+
+        Pair<String, Integer> getFileLine();
+
+        String getComment();
     }
 }

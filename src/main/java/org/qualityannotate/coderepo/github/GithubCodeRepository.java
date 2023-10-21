@@ -1,13 +1,16 @@
 package org.qualityannotate.coderepo.github;
 
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.qualityannotate.api.coderepository.CodeRepository;
@@ -39,10 +42,68 @@ public class GithubCodeRepository implements CodeRepository {
     }
 
     @Override
-    public void createOrUpdateAnnotations(Comment globalComment, List<FileComment> fileComments) throws IOException {
-        githubApi.createOrUpdateMainComment(globalComment.markdown(), config.project(), config.pullRequest());
+    public void createOrUpdateAnnotations(Comment globalComment, List<FileComment> fileComments) {
+        Optional<GithubApi.GithubMainComment> mainComment = Optional.empty();
+        try {
+            mainComment = githubApi.getMainComment(config.project(), config.pullRequest());
+        } catch (IOException e) {
+            Log.warn("Could not retrieve main comment");
+        }
+        mainComment.ifPresentOrElse(c -> {
+            try {
+                c.update(globalComment.markdown());
+            } catch (IOException e) {
+                Log.warn("Could not update main comment", e);
+            }
+        }, () -> {
+            try {
+                githubApi.createMainComment(config.project(), config.pullRequest(), globalComment.markdown());
+            } catch (IOException e) {
+                Log.warn("Could not create main comment", e);
+            }
+        });
+
         Map<Pair<String, Integer>, String> fileLineToComment = convertFileCommentsToMap(fileComments);
-        githubApi.createOrUpdateFileComments(fileLineToComment, config.project(), config.pullRequest());
+        List<GithubApi.GithubFileComment> githubFileComments = Collections.emptyList();
+        try {
+            githubFileComments = githubApi.listFileComments(config.project(), config.pullRequest());
+        } catch (IOException e) {
+            Log.warn("Could not retrieve comments");
+        }
+        for (GithubApi.GithubFileComment review : githubFileComments) {
+            String comment = fileLineToComment.get(review.getFileLine());
+            Log.info("Found existing file comment");
+            if (comment != null) {
+                fileLineToComment.remove(review.getFileLine());
+                if (!review.getComment().equals(comment)) {
+                    Log.info(" -> updating");
+                    try {
+                        review.update(comment);
+                    } catch (IOException e) {
+
+                        Log.warn("Could not update comment", e);
+                    }
+                }
+            } else {
+                Log.infof(" -> deleting %s", review.getFileLine());
+                try {
+                    review.delete();
+                } catch (IOException e) {
+                    Log.warn("Could not delete comment", e);
+                }
+            }
+        }
+
+        for (Map.Entry<Pair<String, Integer>, String> fileLineCommentEntry : fileLineToComment.entrySet()) {
+            try {
+                Log.infof("Creating %s", fileLineCommentEntry.getKey());
+                githubApi.createFileComment(config.project(), config.pullRequest(),
+                        fileLineCommentEntry.getKey().getLeft(), fileLineCommentEntry.getKey().getRight(),
+                        fileLineCommentEntry.getValue());
+            } catch (IOException e) {
+                Log.warn("Could not create comment", e);
+            }
+        }
     }
 
     @Override
