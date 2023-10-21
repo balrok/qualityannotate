@@ -12,14 +12,18 @@ import org.kohsuke.github.PagedIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class GithubApi {
+import org.qualityannotate.api.coderepository.api.CodeApi;
+import org.qualityannotate.api.coderepository.api.CodeFileComment;
+import org.qualityannotate.api.coderepository.api.CodeMainComment;
+
+public class GithubApi implements CodeApi {
     private final GitHubBuilder gitHubBuilder;
-    private final Map<Integer, GHPullRequest> pullRequestCache = new HashMap<>();
+    private final String project;
+    private final int pullRequestId;
+    private GHPullRequest pullRequestCache;
     /**
      * Guaranteed to be not null by {@link #init()}
      */
@@ -29,8 +33,10 @@ public class GithubApi {
      */
     private long userId = 0L;
 
-    public GithubApi(String token) {
+    public GithubApi(String token, String project, int pullRequestId) {
         gitHubBuilder = new GitHubBuilder().withOAuthToken(token);
+        this.project = project;
+        this.pullRequestId = pullRequestId;
     }
 
     private void init() throws IOException {
@@ -41,21 +47,19 @@ public class GithubApi {
         }
     }
 
-    private GHPullRequest getPR(String project, int pullRequestId) throws IOException {
+    private GHPullRequest getPR() throws IOException {
         init();
-        GHPullRequest ghPullRequest = pullRequestCache.get(pullRequestId);
-        if (ghPullRequest != null) {
-            return ghPullRequest;
+        if (pullRequestCache == null) {
+            GHRepository repository = github.getRepository(project);
+            pullRequestCache = repository.getPullRequest(pullRequestId);
         }
-        GHRepository repository = github.getRepository(project);
-        ghPullRequest = repository.getPullRequest(pullRequestId);
-        pullRequestCache.put(pullRequestId, ghPullRequest);
-        return ghPullRequest;
+        return pullRequestCache;
     }
 
-    public Optional<GithubMainComment> getMainComment(String project, int pullRequestId) throws IOException {
+    @Override
+    public Optional<CodeMainComment> getMainComment() throws IOException {
         init();
-        GHPullRequest pullRequest = getPR(project, pullRequestId);
+        GHPullRequest pullRequest = getPR();
         PagedIterator<GHIssueComment> commentIterator = pullRequest.listComments().iterator();
         while (commentIterator.hasNext()) {
             GHIssueComment comment = commentIterator.next();
@@ -69,21 +73,23 @@ public class GithubApi {
         return Optional.empty();
     }
 
-    public void createMainComment(String project, int pullRequestId, String comment) throws IOException {
+    @Override
+    public void createMainComment(String comment) throws IOException {
         init();
-        GHPullRequest pullRequest = getPR(project, pullRequestId);
+        GHPullRequest pullRequest = getPR();
         System.out.println("Creating new global comment");
         pullRequest.comment(comment);
     }
 
-    public List<GithubFileComment> listFileComments(String project, int pullRequestId) throws IOException {
+    @Override
+    public List<CodeFileComment> listFileComments() throws IOException {
         init();
         Log.info("Start creating file comments");
-        GHPullRequest pullRequest = getPR(project, pullRequestId);
-        List<GithubFileComment> result = new ArrayList<>();
+        GHPullRequest pullRequest = getPR();
+        List<CodeFileComment> result = new ArrayList<>();
         for (GHPullRequestReviewComment review : pullRequest.listReviewComments()) {
             if (review.getUser().getId() == userId) {
-                result.add(new GithubFileComment() {
+                result.add(new CodeFileComment() {
                     @Override
                     public void update(String comment) throws IOException {
                         review.update(comment);
@@ -109,26 +115,12 @@ public class GithubApi {
         return result;
     }
 
-    public void createFileComment(String project, int pullRequestId, String file, Integer line, String comment)
-            throws IOException {
+    @Override
+    public void createFileComment(String file, Integer line, String comment) throws IOException {
         init();
-        GHPullRequest pullRequest = getPR(project, pullRequestId);
+        GHPullRequest pullRequest = getPR();
         String commitHash = pullRequest.getHead().getSha();
         line = (line == null || line < 1) ? 1 : line;
         pullRequest.createReviewComment(comment, commitHash, file, line);
-    }
-
-    public interface GithubMainComment {
-        void update(String comment) throws IOException;
-    }
-
-    public interface GithubFileComment {
-        void update(String comment) throws IOException;
-
-        void delete() throws IOException;
-
-        Pair<String, Integer> getFileLine();
-
-        String getComment();
     }
 }

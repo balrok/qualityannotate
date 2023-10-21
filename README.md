@@ -42,9 +42,17 @@ Codestyle is setup using `./gradlew spotlessApply`.
 [Intellij requires the eclipse code-formatter plugin](https://plugins.jetbrains.com/plugin/6546-eclipse-code-formatter/versions).
 Configs are `./config/code-formatter/eclipse.importorder` and `./config/code-formatter/eclipse.xml`.
 
+## Pre-Commit hook
+
+```sh
+pip install pre-commit
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+
 ## Creating a native executable / uber jar
 
-```shell script
+```sh
 # create a native executable
 ./gradlew build -Dquarkus.package.type=native
 # create a native executable using a docker container
