@@ -83,7 +83,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: qualityannotate
-          path: ./build/qualityannotate-1.0.0-SNAPSHOT-runner
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
         with:
@@ -98,11 +97,7 @@ jobs:
           SONARQUBE_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONARQUBE_PULL_REQUEST: ${{ steps.findPr.outputs.pr }}
         run: |
-          PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
-          echo "${PR_NUMBER}"
-          ls
-          ls build
-          chmod +x ./build/qualityannotate-1.0.0-SNAPSHOT-runner
+          chmod +x ./qualityannotate-1.0.0-SNAPSHOT-runner
           mkdir -p config
           cp src/main/resources/application.yml config/
-          ./build/qualityannotate-1.0.0-SNAPSHOT-runner
+          ./qualityannotate-1.0.0-SNAPSHOT-runner
