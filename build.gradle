@@ -55,6 +55,7 @@ sonar {
 
         property "sonar.projectName", "Quality Annotate"
         property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.jacoco.reportPath", "build/jacoco-quarkus.exec"
     }
 }
 
