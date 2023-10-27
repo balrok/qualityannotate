@@ -22,6 +22,7 @@ dependencies {
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation "org.wiremock:wiremock:3.2.0"
     testImplementation "org.mockito:mockito-core:3.9.0"
+    testImplementation "io.quarkus:quarkus-jacoco"
 }
 
 group 'org.qualityannotate'
@@ -54,6 +55,7 @@ sonar {
 
         property "sonar.projectName", "Quality Annotate"
         property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.jacoco.reportPath", "build/jacoco-quarkus.exec"
     }
 }
 
@@ -63,7 +65,14 @@ jacocoTestReport {
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
 }
-test.finalizedBy jacocoTestReport
+test {
+    finalizedBy jacocoTestReport
+    jacoco {
+        excludeClassLoaders = ["*QuarkusClassLoader"]
+        destinationFile = layout.buildDirectory.file("jacoco-quarkus.exec").get().asFile
+    }
+    jacocoTestReport.enabled = false
+}
 
 spotless {
   encoding 'UTF-8'
