@@ -5,24 +5,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.qualityannotate.api.qualitytool.GlobalMetrics;
 import org.qualityannotate.api.qualitytool.Issue;
 import org.qualityannotate.api.qualitytool.MetricsAndIssues;
 import org.qualityannotate.api.qualitytool.QualityTool;
 import org.qualityannotate.core.rest.BasicAuthRequestFilter;
-import org.qualityannotate.quality.sonarqube.client.ComponentMeasures;
-import org.qualityannotate.quality.sonarqube.client.IssueSearch;
-import org.qualityannotate.quality.sonarqube.client.Measure;
-import org.qualityannotate.quality.sonarqube.client.Metric;
-import org.qualityannotate.quality.sonarqube.client.SonarqubeApiClient;
-import org.qualityannotate.quality.sonarqube.client.SqIssue;
+import org.qualityannotate.quality.sonarqube.client.*;
 
 @ApplicationScoped
 public class SonarqubeQualityTool implements QualityTool {
@@ -45,6 +35,7 @@ public class SonarqubeQualityTool implements QualityTool {
         for (SqIssue sqIssue : issuesSearch.issues()) {
             issues.add(new Issue(sqIssue.getPath(config.project()), sqIssue.textRange().startLine(),
                     sqIssue.getQualityType().map(q -> q + ": ").orElse("") + sqIssue.message(), sqIssue.getSeverity(),
+                    getSeverityIcon(sqIssue.getSeverity()), getSeverityEnum(sqIssue.getSeverity()),
                     getIssueUrl(sqIssue.rule())));
         }
         return issues;
@@ -79,7 +70,7 @@ public class SonarqubeQualityTool implements QualityTool {
                 metrics.put(metric.getName(), value);
             }
         }
-        return new GlobalMetrics(metrics);
+        return new GlobalMetrics(metrics, getUrl());
     }
 
     private String getIssueUrl(String rule) {
@@ -108,6 +99,15 @@ public class SonarqubeQualityTool implements QualityTool {
         case "medium" -> "⚠\uFE0F";
         case "high" -> "\uD83D\uDED1";
         default -> severity;
+        };
+    }
+
+    public Issue.Severity getSeverityEnum(String severity) {
+        return switch (severity.toLowerCase(Locale.ENGLISH)) {
+        case "low" -> Issue.Severity.LOW;
+        case "medium" -> Issue.Severity.MEDIUM;
+        // case "high" -> Issue.Severity.HIGH;
+        default -> Issue.Severity.HIGH;
         };
     }
 

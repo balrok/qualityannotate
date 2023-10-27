@@ -1,9 +1,6 @@
 package org.qualityannotate.quality.sonarqube;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathTemplate;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.jknack.handlebars.internal.Files;
@@ -56,8 +53,10 @@ public class SonarqubeQualityToolTest {
                 .withQueryParam("metricKeys", equalTo("test-metrics-1,test-metrics-2"))
                 .withQueryParam("additionalFields", equalTo("metrics"))
                 .willReturn(okJson(content)));
-        assertEquals(new GlobalMetrics(Map.of("New issues", "25", "Lines of code", "114", "Complexity", "12")),
-                cut.getGlobalMetrics());
+        GlobalMetrics globalMetrics = cut.getGlobalMetrics();
+        assertEquals(Map.of("Complexity", "12", "New issues", "25", "Lines of code", "114"), globalMetrics.metrics());
+        assertEquals("http://localhost:42345/summary/new_code?id=Test_Project&pullRequest=Test_Pr".replaceAll(":[0-9]+",
+                ":123"), globalMetrics.url().replaceAll(":[0-9]+", ":123"));
     }
 
     @Test
@@ -77,8 +76,8 @@ public class SonarqubeQualityToolTest {
                 .willReturn(okJson(content)));
         assertEquals(
                 List.of(new Issue("om.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest", 2,
-                        "Remove this unused private \"getKee\" method.", "MAJOR",
-                        "https://sonarcloud" + ".io/organizations/quyt/rules?open=java:S1144&rule_key=java:S1144")),
+                        "Remove this unused private \"getKee\" method.", "MAJOR", "MAJOR", Issue.Severity.HIGH,
+                        "https://sonarcloud.io/organizations/quyt/rules?open=java:S1144&rule_key=java:S1144")),
                 cut.getIssues());
     }
 

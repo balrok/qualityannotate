@@ -2,24 +2,19 @@ package org.qualityannotate.coderepo.github.client;
 
 import io.quarkus.logging.Log;
 import org.apache.commons.lang3.tuple.Pair;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestReviewComment;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
-import org.kohsuke.github.PagedIterator;
+import org.kohsuke.github.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.qualityannotate.api.coderepository.api.CodeApi;
-import org.qualityannotate.api.coderepository.api.CodeFileComment;
-import org.qualityannotate.api.coderepository.api.CodeMainComment;
+import org.qualityannotate.api.coderepository.api.CodeTextApi;
+import org.qualityannotate.api.coderepository.api.CodeTextFileComment;
+import org.qualityannotate.api.coderepository.api.CodeTextMainComment;
+import org.qualityannotate.coderepo.github.GithubConfig;
 
-public class GithubApi implements CodeApi {
+public class GithubTextApi implements CodeTextApi {
     private final GitHubBuilder gitHubBuilder;
     private final String project;
     private final int pullRequestId;
@@ -33,10 +28,10 @@ public class GithubApi implements CodeApi {
      */
     private long userId = 0L;
 
-    public GithubApi(String token, String project, int pullRequestId) {
-        gitHubBuilder = new GitHubBuilder().withOAuthToken(token);
-        this.project = project;
-        this.pullRequestId = pullRequestId;
+    public GithubTextApi(GithubConfig config) {
+        gitHubBuilder = new GitHubBuilder().withOAuthToken(config.token());
+        this.project = config.project();
+        this.pullRequestId = config.pullRequest();
     }
 
     private void init() throws IOException {
@@ -57,8 +52,7 @@ public class GithubApi implements CodeApi {
     }
 
     @Override
-    public Optional<CodeMainComment> getMainComment() throws IOException {
-        init();
+    public Optional<CodeTextMainComment> getMainComment() throws IOException {
         GHPullRequest pullRequest = getPR();
         PagedIterator<GHIssueComment> commentIterator = pullRequest.listComments().iterator();
         while (commentIterator.hasNext()) {
@@ -75,21 +69,19 @@ public class GithubApi implements CodeApi {
 
     @Override
     public void createMainComment(String comment) throws IOException {
-        init();
         GHPullRequest pullRequest = getPR();
         System.out.println("Creating new global comment");
         pullRequest.comment(comment);
     }
 
     @Override
-    public List<CodeFileComment> listFileComments() throws IOException {
-        init();
+    public List<CodeTextFileComment> listFileComments() throws IOException {
         Log.info("Start creating file comments");
         GHPullRequest pullRequest = getPR();
-        List<CodeFileComment> result = new ArrayList<>();
+        List<CodeTextFileComment> result = new ArrayList<>();
         for (GHPullRequestReviewComment review : pullRequest.listReviewComments()) {
             if (review.getUser().getId() == userId) {
-                result.add(new CodeFileComment() {
+                result.add(new CodeTextFileComment() {
                     @Override
                     public void update(String comment) throws IOException {
                         review.update(comment);
@@ -117,7 +109,6 @@ public class GithubApi implements CodeApi {
 
     @Override
     public void createFileComment(String file, Integer line, String comment) throws IOException {
-        init();
         GHPullRequest pullRequest = getPR();
         String commitHash = pullRequest.getHead().getSha();
         line = (line == null || line < 1) ? 1 : line;

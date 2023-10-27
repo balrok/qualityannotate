@@ -4,41 +4,25 @@ import io.quarkus.logging.Log;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.qualityannotate.api.coderepository.api.CodeApi;
-import org.qualityannotate.api.coderepository.api.CodeFileComment;
-import org.qualityannotate.api.coderepository.api.CodeMainComment;
+import org.qualityannotate.api.coderepository.api.CodeStructuredApi;
+import org.qualityannotate.api.coderepository.api.CodeTextApi;
+import org.qualityannotate.api.coderepository.api.CodeTextFileComment;
+import org.qualityannotate.api.coderepository.api.CodeTextMainComment;
+import org.qualityannotate.api.qualitytool.MetricsAndIssues;
 
-public abstract class AbstractCodeRepository implements CodeRepository {
+public final class CodeTextExecutor {
+    private CodeTextExecutor() {
 
-    protected static Map<Pair<String, Integer>, String> convertFileCommentsToMap(List<FileComment> fileComments) {
-        Map<Pair<String, Integer>, List<Comment>> fileLineToCommentList = new HashMap<>();
-        for (FileComment fileComment : fileComments) {
-            List<Comment> comments = fileLineToCommentList
-                    .computeIfAbsent(Pair.of(fileComment.fileName(), fileComment.linenumber()), k -> new ArrayList<>());
-            comments.add(fileComment.comment());
-        }
-        return fileLineToCommentList.entrySet()
-                .stream()
-                .map(e -> Map.entry(e.getKey(), e.getValue().stream().reduce((c1, c2) -> c1).orElse(Comment.EMPTY)))
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().markdown()));
     }
 
-    protected abstract CodeApi getCodeApi();
-
-    @Override
-    public void createOrUpdateAnnotations(Comment globalComment, List<FileComment> fileComments) {
-        CodeApi codeApi = getCodeApi();
-        Optional<CodeMainComment> mainComment = Optional.empty();
+    public static void run(CodeTextApi codeTextApi, Comment globalComment, List<FileComment> fileComments)
+            throws Exception {
+        Optional<CodeTextMainComment> mainComment = Optional.empty();
         try {
-            mainComment = codeApi.getMainComment();
+            mainComment = codeTextApi.getMainComment();
         } catch (IOException e) {
             Log.warn("Could not retrieve main comment");
         }
@@ -50,20 +34,20 @@ public abstract class AbstractCodeRepository implements CodeRepository {
             }
         }, () -> {
             try {
-                codeApi.createMainComment(globalComment.markdown());
+                codeTextApi.createMainComment(globalComment.markdown());
             } catch (IOException e) {
                 Log.warn("Could not create main comment", e);
             }
         });
 
         Map<Pair<String, Integer>, String> fileLineToComment = convertFileCommentsToMap(fileComments);
-        List<CodeFileComment> githubFileComments = Collections.emptyList();
+        List<CodeTextFileComment> githubFileComments = Collections.emptyList();
         try {
-            githubFileComments = codeApi.listFileComments();
+            githubFileComments = codeTextApi.listFileComments();
         } catch (IOException e) {
             Log.warn("Could not retrieve comments");
         }
-        for (CodeFileComment review : githubFileComments) {
+        for (CodeTextFileComment review : githubFileComments) {
             String comment = fileLineToComment.get(review.getFileLine());
             Log.info("Found existing file comment");
             if (comment != null) {
@@ -90,11 +74,29 @@ public abstract class AbstractCodeRepository implements CodeRepository {
         for (Map.Entry<Pair<String, Integer>, String> fileLineCommentEntry : fileLineToComment.entrySet()) {
             try {
                 Log.infof("Creating %s", fileLineCommentEntry.getKey());
-                codeApi.createFileComment(fileLineCommentEntry.getKey().getLeft(),
+                codeTextApi.createFileComment(fileLineCommentEntry.getKey().getLeft(),
                         fileLineCommentEntry.getKey().getRight(), fileLineCommentEntry.getValue());
             } catch (IOException e) {
                 Log.warn("Could not create comment", e);
             }
         }
+    }
+
+    private static Map<Pair<String, Integer>, String> convertFileCommentsToMap(List<FileComment> fileComments) {
+        Map<Pair<String, Integer>, List<Comment>> fileLineToCommentList = new HashMap<>();
+        for (FileComment fileComment : fileComments) {
+            List<Comment> comments = fileLineToCommentList
+                    .computeIfAbsent(Pair.of(fileComment.fileName(), fileComment.linenumber()), k -> new ArrayList<>());
+            comments.add(fileComment.comment());
+        }
+        return fileLineToCommentList.entrySet()
+                .stream()
+                .map(e -> Map.entry(e.getKey(), e.getValue().stream().reduce((c1, c2) -> c1).orElse(Comment.EMPTY)))
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().markdown()));
+    }
+
+    private static void runCodeStructuredApi(CodeStructuredApi codeStructuredApi, MetricsAndIssues metricsAndIssues)
+            throws Exception {
+        codeStructuredApi.update(metricsAndIssues);
     }
 }

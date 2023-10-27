@@ -7,19 +7,18 @@ import org.qualityannotate.api.coderepository.Comment;
 import org.qualityannotate.api.coderepository.FileComment;
 import org.qualityannotate.api.qualitytool.GlobalMetrics;
 import org.qualityannotate.api.qualitytool.Issue;
-import org.qualityannotate.api.qualitytool.QualityTool;
 
 public class CommentProcessor {
     private CommentProcessor() {
     }
 
-    public static Comment createGlobalComment(GlobalMetrics globalMetrics, QualityTool qualityTool) {
+    public static Comment createGlobalComment(GlobalMetrics globalMetrics) {
         String markdown = String.format("""
                 Code Quality Report for [SonarQube](%s)
                 | Name | Value |
                 |------|-------|
                 %s
-                """, qualityTool.getUrl(),
+                """, globalMetrics.url(),
                 globalMetrics.metrics()
                         .entrySet()
                         .stream()
@@ -28,14 +27,14 @@ public class CommentProcessor {
         return new Comment(markdown, markdown, "TODO-html");
     }
 
-    public static List<FileComment> createFileComments(List<Issue> issues, QualityTool qualityTool) {
-        return issues.stream().map(issue -> createComment(issue, qualityTool)).toList();
+    public static List<FileComment> createFileComments(List<Issue> issues) {
+        return issues.stream().map(issue -> createComment(issue)).toList();
     }
 
-    private static FileComment createComment(Issue issue, QualityTool qualityTool) {
+    public static FileComment createComment(Issue issue) {
         String markdown = String.format("""
                 %s %s%s
-                """, qualityTool.getSeverityIcon(issue.severity()), issue.comment(),
+                """, issue.severityIcon(), issue.comment(),
                 (issue.urlToIssue() == null ? "" : " [details](" + issue.urlToIssue() + ")"));
         Comment comment = new Comment(markdown, markdown, "TODO-html");
         return new FileComment(issue.fileName(), issue.lineNumber(), comment);

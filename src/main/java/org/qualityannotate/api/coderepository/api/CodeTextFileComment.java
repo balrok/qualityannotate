@@ -4,7 +4,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 
-public interface CodeFileComment {
+public interface CodeTextFileComment {
     void update(String comment) throws IOException;
 
     void delete() throws IOException;

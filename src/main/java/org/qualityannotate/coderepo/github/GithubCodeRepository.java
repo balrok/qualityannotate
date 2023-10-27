@@ -2,19 +2,33 @@ package org.qualityannotate.coderepo.github;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import org.qualityannotate.api.coderepository.AbstractCodeRepository;
+import java.util.List;
+
 import org.qualityannotate.api.coderepository.CodeRepository;
-import org.qualityannotate.api.coderepository.api.CodeApi;
-import org.qualityannotate.coderepo.github.client.GithubApi;
+import org.qualityannotate.api.coderepository.CodeStructuredExecutor;
+import org.qualityannotate.api.coderepository.Comment;
+import org.qualityannotate.api.coderepository.FileComment;
+import org.qualityannotate.api.qualitytool.MetricsAndIssues;
+import org.qualityannotate.coderepo.github.client.GithubStructuredApi;
+import org.qualityannotate.coderepo.github.client.GithubTextApi;
 
 @ApplicationScoped
-public class GithubCodeRepository extends AbstractCodeRepository implements CodeRepository {
+public class GithubCodeRepository implements CodeRepository {
     private final GithubConfig config;
-    private final GithubApi githubApi;
+    private final GithubTextApi githubTextsApi;
+    private final GithubStructuredApi githubStructuredApi;
 
     public GithubCodeRepository(GithubConfig config) {
         this.config = config;
-        this.githubApi = new GithubApi(config.token(), config.project(), config.pullRequest());
+        this.githubTextsApi = new GithubTextApi(config);
+        this.githubStructuredApi = new GithubStructuredApi(config);
+    }
+
+    @Override
+    public void createOrUpdateAnnotations(Comment globalComment, List<FileComment> fileComments,
+            MetricsAndIssues metricsAndIssues) throws Exception {
+        CodeStructuredExecutor.run(githubStructuredApi, metricsAndIssues);
+        // CodeTextExecutor.run(githubTextsApi, globalComment, fileComments);
     }
 
     @Override
@@ -22,8 +36,4 @@ public class GithubCodeRepository extends AbstractCodeRepository implements Code
         return config.printWithoutSecrets();
     }
 
-    @Override
-    protected CodeApi getCodeApi() {
-        return githubApi;
-    }
 }
