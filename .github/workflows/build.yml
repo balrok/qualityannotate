@@ -28,8 +28,6 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   build:
     name: "build"
-    permissions:
-      checks: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -90,7 +88,8 @@ jobs:
       - name: Qualityannotate
         if: success() && steps.findPr.outputs.number
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          # ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PULL_REQUEST: ${{ steps.findPr.outputs.pr }}
           GITHUB_PROJECT: balrok/qualityannotate  # ${{env.GITHUB_ACTION_REPOSITORY}}
           SONARQUBE_PROJECT: quyt_qualityannotate

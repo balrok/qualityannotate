@@ -35,17 +35,16 @@ public class MainCommand implements Runnable {
     @Parameters(paramLabel = "<coderepository>", defaultValue = GithubConfig.NAME, description = "To which code-repository you want to upload the data. Possible Values: ${COMPLETION-CANDIDATES}; Default: ${DEFAULT-VALUE}", completionCandidates = CodeRepoProvider.CodeRepositoryCandidates.class)
     String codeRepositoryParam;
 
-    private static void updateAnnotations(QualityTool qualityTool, CodeRepository codeRepository,
-            MetricsAndIssues metricsAndIssues) {
-        Comment globalComment = CommentProcessor.createGlobalComment(metricsAndIssues.globalMetrics(), qualityTool);
-        List<FileComment> fileComments = CommentProcessor.createFileComments(metricsAndIssues.issues(), qualityTool);
+    private static void updateAnnotations(CodeRepository codeRepository, MetricsAndIssues metricsAndIssues) {
+        Comment globalComment = CommentProcessor.createGlobalComment(metricsAndIssues.globalMetrics());
+        List<FileComment> fileComments = CommentProcessor.createFileComments(metricsAndIssues.issues());
         Log.infof("Global comment:\n%s", globalComment.text());
         Log.infof("Issues:\n%s",
                 fileComments.stream()
                         .map(c -> String.format("%s:%d\n%s", c.fileName(), c.linenumber(), c.comment().text()))
                         .collect(Collectors.joining("\n\n")));
         try {
-            codeRepository.createOrUpdateAnnotations(globalComment, fileComments);
+            codeRepository.createOrUpdateAnnotations(globalComment, fileComments, metricsAndIssues);
         } catch (Exception e) {
             Log.error("Updating the code-repository failed", e);
             System.exit(1);
@@ -72,6 +71,6 @@ public class MainCommand implements Runnable {
         Log.infof("Code-Repository tool configured with\n%s", codeRepository.printConfigWithoutSecrets());
         MetricsAndIssues metricsAndIssues = getMetricsAndIssues(qualityTool);
         Log.info(metricsAndIssues);
-        updateAnnotations(qualityTool, codeRepository, metricsAndIssues);
+        updateAnnotations(codeRepository, metricsAndIssues);
     }
 }
