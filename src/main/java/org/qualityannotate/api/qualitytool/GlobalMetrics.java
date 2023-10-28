@@ -1,6 +1,12 @@
 package org.qualityannotate.api.qualitytool;
 
-import java.util.Map;
+import jakarta.annotation.Nullable;
 
-public record GlobalMetrics(Map<String, String> metrics, String url) {
+import java.util.Map;
+import java.util.Optional;
+
+public record GlobalMetrics(Map<String, String> metrics, String url, @Nullable String statusUrl) {
+    public Optional<String> getStatusUrl() {
+        return Optional.ofNullable(statusUrl);
+    }
 }

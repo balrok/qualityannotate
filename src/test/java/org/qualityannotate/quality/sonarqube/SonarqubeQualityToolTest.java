@@ -1,6 +1,9 @@
 package org.qualityannotate.quality.sonarqube;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathTemplate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.jknack.handlebars.internal.Files;
@@ -75,8 +78,8 @@ public class SonarqubeQualityToolTest {
                 .withQueryParam("statuses", equalTo("OPEN,REOPENED,CONFIRMED"))
                 .willReturn(okJson(content)));
         assertEquals(
-                List.of(new Issue("om.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest", 2,
-                        "Remove this unused private \"getKee\" method.", "MAJOR", "MAJOR", Issue.Severity.HIGH,
+                List.of(new Issue("om.github.kevinsawicki:http-request:com.github.kevinsawicki.http.HttpRequest", 2, 2,
+                        0, 0, "Remove this unused private \"getKee\" method.", "MAJOR", Issue.Severity.HIGH,
                         "https://sonarcloud.io/organizations/quyt/rules?open=java:S1144&rule_key=java:S1144")),
                 cut.getIssues());
     }

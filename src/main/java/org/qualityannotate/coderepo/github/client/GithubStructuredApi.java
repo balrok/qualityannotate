@@ -1,8 +1,17 @@
 package org.qualityannotate.coderepo.github.client;
 
-import org.kohsuke.github.*;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.kohsuke.github.GHCheckRun;
+import org.kohsuke.github.GHCheckRunBuilder;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.PagedIterator;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,15 +21,17 @@ import org.qualityannotate.api.qualitytool.MetricsAndIssues;
 import org.qualityannotate.coderepo.github.GithubConfig;
 import org.qualityannotate.core.CommentProcessor;
 
+/**
+ * This is using the Github <a href="https://docs.github.com/en/rest/checks">checks api</a>.
+ * It seems like it can't be executed locally but only in a github-actions job.
+ */
+@ApplicationScoped
 public class GithubStructuredApi implements CodeStructuredApi {
     public static final String NAME = "qualityannotate";
+
     private final GitHubBuilder gitHubBuilder;
     private final String project;
     private final int pullRequestId;
-    /**
-     * Guaranteed to be not null by {@link #init()}
-     */
-    private GitHub github = null;
 
     public GithubStructuredApi(GithubConfig config) {
         gitHubBuilder = new GitHubBuilder().withOAuthToken(config.token());
@@ -40,16 +51,9 @@ public class GithubStructuredApi implements CodeStructuredApi {
         return Optional.empty();
     }
 
-    private void init() throws IOException {
-        if (github == null) {
-            github = gitHubBuilder.build();
-            // github.checkApiUrlValidity();
-        }
-    }
-
     @Override
     public void update(MetricsAndIssues metricsAndIssues) throws IOException {
-        init();
+        GitHub github = gitHubBuilder.build();
         GHRepository repository = github.getRepository(project);
         GHPullRequest pullRequest = repository.getPullRequest(pullRequestId);
         Optional<GHCheckRun> checkRunOpt = findCheckRun(repository, pullRequest);
@@ -68,13 +72,22 @@ public class GithubStructuredApi implements CodeStructuredApi {
         checkRunBuilder.withDetailsURL(metricsAndIssues.globalMetrics().url());
         checkRunBuilder.withStatus(GHCheckRun.Status.COMPLETED);
         checkRunBuilder.withConclusion(GHCheckRun.Conclusion.NEUTRAL);
+        checkRunBuilder.withCompletedAt(Date.from(Instant.now()));
+
         GHCheckRunBuilder.Output output = new GHCheckRunBuilder.Output("Result",
                 CommentProcessor.createGlobalComment(metricsAndIssues.globalMetrics()).markdown());
         List<Issue> issues = metricsAndIssues.issues();
         for (Issue issue : issues) {
-            output.add(new GHCheckRunBuilder.Annotation(issue.fileName(), issue.lineNumber(),
-                    mapSeverity(issue.severityEnum()), CommentProcessor.createComment(issue).comment().markdown()));
+            GHCheckRunBuilder.Annotation annotation = new GHCheckRunBuilder.Annotation(issue.fileName(),
+                    issue.startLine(), Optional.ofNullable(issue.endLine()).orElse(issue.startLine()),
+                    mapSeverity(issue.severityEnum()), CommentProcessor.createComment(issue).comment().text());
+            Optional.ofNullable(issue.startColumn()).ifPresent(annotation::withStartColumn);
+            Optional.ofNullable(issue.endColumn()).ifPresent(annotation::withEndColumn);
+            output.add(annotation);
         }
+        metricsAndIssues.globalMetrics()
+                .getStatusUrl()
+                .ifPresent(u -> output.add(new GHCheckRunBuilder.Image("Status", u)));
         checkRunBuilder.add(output);
         checkRunBuilder.create();
     }

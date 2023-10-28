@@ -28,15 +28,19 @@ public class CommentProcessor {
     }
 
     public static List<FileComment> createFileComments(List<Issue> issues) {
-        return issues.stream().map(issue -> createComment(issue)).toList();
+        return issues.stream().map(CommentProcessor::createComment).toList();
     }
 
     public static FileComment createComment(Issue issue) {
         String markdown = String.format("""
-                %s %s%s
-                """, issue.severityIcon(), issue.comment(),
+                %s%s%s
+                """, issue.severityEnum().getUnicodeIcon(), issue.comment(),
                 (issue.urlToIssue() == null ? "" : " [details](" + issue.urlToIssue() + ")"));
-        Comment comment = new Comment(markdown, markdown, "TODO-html");
+        String text = String.format("""
+                %s%s%s
+                """, issue.severityEnum().getUnicodeIcon(), issue.comment(),
+                (issue.urlToIssue() == null ? "" : " " + issue.urlToIssue()));
+        Comment comment = new Comment(text, markdown, "TODO-html");
         return new FileComment(issue.fileName(), issue.lineNumber(), comment);
     }
 }

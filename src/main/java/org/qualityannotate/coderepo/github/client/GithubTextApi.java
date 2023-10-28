@@ -1,6 +1,7 @@
 package org.qualityannotate.coderepo.github.client;
 
 import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.github.*;
 
@@ -14,6 +15,7 @@ import org.qualityannotate.api.coderepository.api.CodeTextFileComment;
 import org.qualityannotate.api.coderepository.api.CodeTextMainComment;
 import org.qualityannotate.coderepo.github.GithubConfig;
 
+@ApplicationScoped
 public class GithubTextApi implements CodeTextApi {
     private final GitHubBuilder gitHubBuilder;
     private final String project;
