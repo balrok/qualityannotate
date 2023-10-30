@@ -86,18 +86,12 @@ jobs:
         with:
           state: open
       - name: Qualityannotate
+        uses: ./
         if: success() && steps.findPr.outputs.number
-        env:
-          # ${{ secrets.TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_PULL_REQUEST: ${{ steps.findPr.outputs.pr }}
-          GITHUB_PROJECT: balrok/qualityannotate  # ${{env.GITHUB_ACTION_REPOSITORY}}
-          SONARQUBE_PROJECT: quyt_qualityannotate
-          SONARQUBE_URL: https://sonarcloud.io/
-          SONARQUBE_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONARQUBE_PULL_REQUEST: ${{ steps.findPr.outputs.pr }}
-        run: |
-          chmod +x ./qualityannotate-1.0.0-SNAPSHOT-runner
-          mkdir -p config
-          cp src/main/resources/application.yml config/
-          ./qualityannotate-1.0.0-SNAPSHOT-runner
+        with:
+          pullRequest: ${{ steps.findPr.outputs.pr }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          githubProject: balrok/qualityannotate  # ${{env.GITHUB_ACTION_REPOSITORY}}
+          sonarqubeProject: quyt_qualityannotate
+          sonarqubeUrl: https://sonarcloud.io/
+          sonarqubeToken: ${{ secrets.SONAR_TOKEN }}

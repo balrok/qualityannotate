@@ -1,0 +1,41 @@
+---
+name: 'Cache'
+description: 'Cache artifacts like dependencies and build outputs to improve workflow execution time'
+author: 'GitHub'
+inputs:
+  pullRequest:
+    description: "Number of the pull request. Use jwalton/gh-find-current-pr@v1"
+    required: true
+  sonarqubeToken:
+    description: "How to create a token:
+      https://docs.sonarsource.com/sonarqube/9.8/user-guide/user-account/generating-and-using-tokens/"
+    required: true
+  sonarqubeProject:
+    description: "Project identifier in sonarqube"
+    required: true
+  sonarqubeUrl:
+    description: "E.g. https://sonarqube.io"
+    required: true
+  githubToken:
+    description: "Give your pipeline the checks:write permission and use secrets.GITHUB_TOKEN"
+    required: true
+  githubProject:
+    description: "e.g. balrok/qualityannotate"
+    required: true
+runs:
+  using: 'docker'
+  image: 'docker://ghcr.io/balrok/qualityannotate:v0'
+  env:
+    GITHUB_TOKEN: ${{ inputs.githubToken }}
+    GITHUB_PULL_REQUEST: ${{ inputs.pullRequest }}
+    GITHUB_PROJECT: ${{ inputs.githubProject }}
+    SONARQUBE_PROJECT: ${{ inputs.sonarqubeProject }}
+    SONARQUBE_URL: ${{ inputs.sonarqubeUrl }}
+    SONARQUBE_TOKEN: ${{ inputs.sonarqubeToken }}
+    SONARQUBE_PULL_REQUEST: ${{ inputs.pullRequest }}
+  args:
+    - sonarqube
+    - github
+branding:
+  icon: 'umbrella'
+  color: 'purple'
