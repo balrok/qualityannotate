@@ -4,7 +4,8 @@
 sonarqube:
   # base-url for your sonarqube api. E.g. https://mysonar.example.com/
   url: "test"
-  # How to create a token: https://docs.sonarsource.com/sonarqube/9.8/user-guide/user-account/generating-and-using-tokens/
+  # How to create a token:
+  # https://docs.sonarsource.com/sonarqube/9.8/user-guide/user-account/generating-and-using-tokens/
   token: "_"
   # The Project key
   project: "_"
@@ -26,6 +27,8 @@ github:
   project: "test"
   # Pullrequest id
   pull_request: "1"
+  # Should the checks-api be used or comments. Default: true
+  use_checks: true
 
 # you can ignore these
 quarkus:

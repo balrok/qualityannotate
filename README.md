@@ -9,7 +9,7 @@ The implementation tries to be variable within the two dimensions of:
 
 |           | Bitbucket | Gitlab   | Github   |
 |-----------|-----------|----------|----------|
-| Sonarqube | &#10060;  | &#10060; | &#9989;  |
+| Sonarqube | &#10060;  | &#10060; | [&#9989;](./docs/github.md)  |
 | ???       | &#10060;  | &#10060; | &#10060; |
 
 Since it is a commandline application it can also be integrated in various ci-systems. Please refer to the sample ci
