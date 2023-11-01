@@ -33,4 +33,4 @@ github:
 # you can ignore these
 quarkus:
   native:
-    additional-build-args: "--gc=epsilon"
+    additional-build-args: "--gc=epsilon, --static, --libc=musl"
