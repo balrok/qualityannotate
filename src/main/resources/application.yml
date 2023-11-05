@@ -33,4 +33,7 @@ github:
 # you can ignore these
 quarkus:
   native:
-    additional-build-args: "--gc=epsilon"
+    # ,--libc=musl unfortunately not working in the default container
+    additional-build-args: "--gc=epsilon,--static"
+    compression:
+      level: 5
